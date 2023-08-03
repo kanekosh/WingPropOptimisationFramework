@@ -16,13 +16,16 @@ class WingSlipstreamProp(om.Group):
         self.options.declare('WingPropInfo', default=WingPropInfo())
     
     def setup(self):
+        # === Options ===
         wingpropinfo = self.options["WingPropInfo"]
         
+        # === Components ===
         for propeller_nr in range(wingpropinfo.nr_props):
             self.add_subsystem(f'HELIX_{propeller_nr}', subsys=PropellerModel())
         
-        self.add_subsystem('RETHORST', subsys=PropellerModel())
-        self.add_subsystem('RETHORST', subsys=PropellerModel())
+        self.add_subsystem('RETHORST', subsys=SlipStreamModel())
+        self.add_subsystem('OPENAEROSTRUCT', subsys=WingModel())
         
+        # === Explicit connecting ===        
         self.connect("velocity_distribution", "AS_point_0.coupled.aero_states.velocity_distribution")
         self.connect("rethorst_correction", "AS_point_0.coupled.aero_states.rethorst_correction")

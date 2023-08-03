@@ -17,9 +17,11 @@ class WingModel(om.Group):
         self.options.declare('WingInfo', default=WingInfo())
         
     def setup(self):
+        # === Options ===
         wingpropinfo = self.options['WingPropInfo']
         winginfo = self.options['WingInfo']
         
+        # === Components ===
         twist_cp = winginfo.twist
         
         mesh = meshing(span=winginfo.span, prop_locations=wingpropinfo.prop_locations, prop_radii=wingpropinfo.prop_radii, nr_props=wingpropinfo.nr_props, 
@@ -85,7 +87,8 @@ class WingModel(om.Group):
                 "load_factor",
             ],
         )
-
+        
+        # === Explicit connecting ===
         com_name = point_name + "." + name + "_perf"
         self.connect(name + ".local_stiff_transformed", point_name + ".coupled." + name + ".local_stiff_transformed")
         self.connect(name + ".nodes", point_name + ".coupled." + name + ".nodes")

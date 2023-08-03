@@ -7,6 +7,13 @@ from src.utils.meshing import meshing
 # --- External ---
 import numpy as np
 
+@dataclass
+class ParamInfo:
+    vinf: float
+    wing_aoa: float
+    alpha_L0: float
+    alpha_0: float
+    
 
 @dataclass
 class AirfoilInfo:
@@ -54,6 +61,9 @@ class WingPropInfo:
     nr_props: int
     spanwise_discretisation_wing: int
     spanwise_discretisation_propeller: int
+    # TODO: right now it is assumed that all propellers have the same discretisation.
+    #           This is not necessarily true
+    spanwise_discretisation_propeller_BEM: int
     
     propeller: list[PropInfo]
     wing: WingInfo

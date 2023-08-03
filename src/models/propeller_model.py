@@ -18,19 +18,15 @@ class PropellerModel(om.Group):
         self.options.declare('PropellerInfo', default=PropInfo())
         
     def setup(self):
+        # === Options ===
         self.propellerinfo = self.options["PropellerInfo"]
 
-        # Set Up Helix Case
+        # === Components ===
         simparam_def = self._simparam_definition()
         references_def = self._references_definition()
         geometry_def = self._geometry_definition()
 
-        # Define OpenMDAO Problem
-        prob = om.Problem()
-        prob.driver = om.ScipyOptimizeDriver()
-        prob.driver.options["optimizer"] = "SLSQP"
-
-        prob.model.add_subsystem(
+        self.add_subsystem(
             "om_helix",
             om_helix.HELIX_Group(
                 simparam_def=simparam_def,
