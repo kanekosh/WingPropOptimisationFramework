@@ -14,20 +14,16 @@ class WingModel(om.Group):
     
     def initialize(self):
         self.options.declare('WingPropInfo', default=WingPropInfo())
-        self.options.declare('WingInfo', default=WingInfo())
         
     def setup(self):
         # === Options ===
         wingpropinfo = self.options['WingPropInfo']
-        winginfo = self.options['WingInfo']
+        winginfo = wingpropinfo.wing
         
         # === Components ===
         twist_cp = winginfo.twist
         
-        mesh = meshing(span=winginfo.span, prop_locations=wingpropinfo.prop_locations, prop_radii=wingpropinfo.prop_radii, nr_props=wingpropinfo.nr_props, 
-                        spanwise_discretisation_wing=wingpropinfo.spanwise_discretisation_wing, 
-                        spanwise_discretisation_propeller=wingpropinfo.spanwise_discretisation_propeller, 
-                        total_panels=wingpropinfo.spanwise_discretisation)
+        mesh = self.wingpropinfo.vlm_mesh
 
         surface = {
                         # === Wing definition ===
@@ -38,6 +34,7 @@ class WingModel(om.Group):
                         "thickness_cp": np.array([0.1, 0.2, 0.3]),
                         "twist_cp": twist_cp,
                         "mesh": mesh,
+                        "span": winginfo.span,
                         "CL0": 0.0,  # CL of the surface at alpha=0
                         "CD0": 0.015,  # CD of the surface at alpha=0
                         "k_lam": 0.05,  # percentage of chord with laminar flow, used for viscous drag
@@ -88,7 +85,7 @@ class WingModel(om.Group):
             ],
         )
         
-        # === Explicit connecting ===
+        # === Explicit connections ===
         com_name = point_name + "." + name + "_perf"
         self.connect(name + ".local_stiff_transformed", point_name + ".coupled." + name + ".local_stiff_transformed")
         self.connect(name + ".nodes", point_name + ".coupled." + name + ".nodes")

@@ -17,7 +17,7 @@ class SlipStreamModel(om.Group):
         wingpropinfo = self.options["WingPropInfo"]
         
         # === Components ===
-        self.add_subsystem('rethorst',
+        self.add_subsystem('interpolation',
                     subsys=RETHORST_velocityinterpolation(propeller_quantity=wingpropinfo.nr_props,
                                                 propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
                                                 propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller),
@@ -27,7 +27,7 @@ class SlipStreamModel(om.Group):
                     promotes_outputs=['propeller_radii',
                                       'propeller_velocity'])
 
-        self.add_subsystem('rethorst',
+        self.add_subsystem('correction',
                            subsys=RETHORST_correction(propeller_quantity=wingpropinfo.nr_props,
                                                       propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
                                                       wing_mesh_size=wingpropinfo.spanwise_discretisation),
@@ -40,4 +40,4 @@ class SlipStreamModel(om.Group):
                            promotes_outputs=['correction_matrix',
                                              'velocity_distribution'])
 
-        # === Explicit connecting ===
+        # === Explicit connections ===

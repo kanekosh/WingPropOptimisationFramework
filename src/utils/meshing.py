@@ -10,6 +10,7 @@ import numpy as np
 
 def meshing(span: float, prop_locations: np.array, prop_radii: np.array, nr_props: int, 
             spanwise_discretisation_wing: int, spanwise_discretisation_propeller: int, total_panels: int):
+
     y_vlm = np.zeros(total_panels+1, order='F')
     # TODO: Move these calculations to Python, makes debugging easier
     vlm_mesh(span=span,
@@ -22,7 +23,7 @@ def meshing(span: float, prop_locations: np.array, prop_radii: np.array, nr_prop
 
     nx = 2  # number of chordwise nodal points (should be odd)
     # number of spanwise nodal points for the outboard segment
-    ny = wing_prop.spanwise_panels+1
+    ny = total_panels+1
 
     assert ny % 2 != 0
 
