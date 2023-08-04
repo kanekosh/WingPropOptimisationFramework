@@ -1,7 +1,7 @@
 # --- Built-ins ---
 
 # --- Internal ---
-from src.base import PropInfo
+from src.base import ParamInfo, PropInfo
 import helix.parameters.simparam_def as py_simparam_def
 import helix.references.references_def as py_ref_def
 import helix.geometry.geometry_def as py_geo_def
@@ -15,11 +15,13 @@ import numpy as np
 
 class PropellerModel(om.Group):
     def initialize(self):
-        self.options.declare('PropellerInfo', default=PropInfo)
+        self.options.declare('ParamInfo', default=ParamInfo)
+        self.options.declare('PropInfo', default=PropInfo)
         
     def setup(self):
         # === Options ===
-        self.propellerinfo = self.options["PropellerInfo"]
+        self.paraminfo = self.options["ParamInfo"]
+        self.propellerinfo = self.options["PropInfo"]
 
         # === Components ===
         simparam_def = self._simparam_definition()
@@ -45,7 +47,7 @@ class PropellerModel(om.Group):
     # rst simparam
     def _simparam_definition(self):
         simparam = py_simparam_def.t_simparam_def()
-        simparam.basename = "exampleOpt"
+        simparam.basename = "example0"
 
         simparam.nt = 5
         simparam.t_start = 0.0
@@ -53,8 +55,8 @@ class PropellerModel(om.Group):
 
         simparam.nt_rev = 30
 
-        simparam.v_inf = np.array([0.0, 0.0, -1.0])
-        simparam.rho_inf = 1.25
+        simparam.v_inf = np.array([0.0, 0.0, -self.paraminfo.vinf]) # TODO: assuming axial flow
+        simparam.rho_inf = self.paraminfo.air_density
 
         return simparam
 
@@ -89,31 +91,31 @@ class PropellerModel(om.Group):
         geometry_def = py_geo_def.t_geometry_def()
 
         # ---------------------------- Blade Parameters -------------------------- #
-        rotor1 = py_geo_def_parametric.t_geometry_def_parametric()
-        rotor1.CompName = "Rotor1"
-        rotor1.CompType = "rotor"
-        rotor1.RefName = "Hub"
+        rotor = py_geo_def_parametric.t_geometry_def_parametric()
+        rotor.CompName = "rotor"
+        rotor.CompType = "rotor"
+        rotor.RefName = "Hub"
 
         # Reference Parameters
-        N_span = 1
-        rotor1.ref_point = np.array([0.0, 0.0, 0.0])
-        rotor1.ref_chord_frac = 0.5
+        N_span = len(self.propellerinfo.span) # this defines nodes, NOT CONTROL POINTS
+        rotor.ref_point = np.array([0.0, 0.0, 0.0])
+        rotor.ref_chord_frac = 0.5
 
         # Symmetry Parameters
-        rotor1.symmetry = False
-        rotor1.symmetry_point = np.array([0.0, 0.0, 0.0])
-        rotor1.symmetry_normal = np.array([0.0, 1.0, 0.0])
+        rotor.symmetry = False
+        rotor.symmetry_point = np.array([0.0, 0.0, 0.0])
+        rotor.symmetry_normal = np.array([0.0, 1.0, 0.0])
 
         # Mirror Parameters
-        rotor1.mirror = False
-        rotor1.mirror_point = np.array([0.0, 0.0, 0.0])
-        rotor1.mirror_normal = np.array([0.0, 1.0, 0.0])
+        rotor.mirror = False
+        rotor.mirror_point = np.array([0.0, 0.0, 0.0])
+        rotor.mirror_normal = np.array([0.0, 1.0, 0.0])
 
         # Initialize Rotor and Allocate Arrays
-        rotor1.initialize_parametric_geometry_definition(N_span)
+        rotor.initialize_parametric_geometry_definition(N_span)
 
-        rotor1.multiple = True
-        rotor1.multiplicity = {
+        rotor.multiple = True
+        rotor.multiplicity = {
             "mult_type": "rotor",
             "n_blades": self.propellerinfo.nr_blades,
             "rot_axis": self.propellerinfo.rotation_axis,
@@ -124,32 +126,25 @@ class PropellerModel(om.Group):
         }
 
         # ------------------------ Blade Section Definition ---------------------- #
-        # Chord 1 ------------------
-        rotor1.sec[0].chord = 0.02
-        rotor1.sec[0].twist = 10.0
-        rotor1.sec[0].thick = 0.12 * 0.02
-        rotor1.sec[0].alpha_0 = 20.6 * np.pi / 180.0
-        rotor1.sec[0].alpha_L0 = -2.0 * np.pi / 180.0
-        rotor1.sec[0].Cl_alpha = 1.7 * np.pi
-        rotor1.sec[0].M = 50.0
+        for iSection in range(N_span+1):
+            # This defines the properties at mesh nodes
+            rotor.sec[iSection].chord = self.propellerinfo.chord[iSection]
+            rotor.sec[iSection].twist = self.propellerinfo.twist[iSection]
+            rotor.sec[iSection].alpha_0 = self.propellerinfo.airfoils[iSection].alpha_0
+            rotor.sec[iSection].alpha_L0 = self.propellerinfo.airfoils[iSection].alpha_L0
+            rotor.sec[iSection].Cl_alpha = self.propellerinfo.airfoils[iSection].Cl_alpha
+            rotor.sec[iSection].M = 50 #MAGIC: this determine how steep the stall curve is
 
-        # Span 1  ------------------
-        rotor1.span[0].span = 0.1  # 0.05
-        rotor1.span[0].sweep = 0.0
-        rotor1.span[0].dihed = 0.0
-        rotor1.span[0].N_elem_span = 10
-        rotor1.span[0].span_type = "uniform"
-
-        # Chord 2 ------------------
-        rotor1.sec[1].chord = 0.02
-        rotor1.sec[1].twist = 10.0
-        rotor1.sec[1].thick = 0.12 * 0.02
-        rotor1.sec[1].alpha_0 = 20.6 * np.pi / 180.0
-        rotor1.sec[1].alpha_L0 = -2.0 * np.pi / 180.0
-        rotor1.sec[1].Cl_alpha = 1.7 * np.pi
-        rotor1.sec[1].M = 50.0
+        # Span Sections
+        for iSpan in range(N_span):
+            # This defines the properties at control points
+            rotor.span[iSpan].span = self.propellerinfo.span[iSpan]
+            rotor.span[iSpan].sweep = 0.0
+            rotor.span[iSpan].dihed = 0.0
+            rotor.span[iSpan].N_elem_span = 1 # local refinement of spanwise blade section
+            rotor.span[iSpan].span_type = "uniform"
 
         # Append To Vehicle
-        geometry_def.append_component(rotor1)
+        geometry_def.append_component(rotor)
 
         return geometry_def

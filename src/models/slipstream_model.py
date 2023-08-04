@@ -21,8 +21,6 @@ class SlipStreamModel(om.Group):
                     subsys=RETHORST_velocityinterpolation(propeller_quantity=wingpropinfo.nr_props,
                                                 propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
                                                 propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller),
-                    promotes_inputs=['propeller_radii_BEM',
-                                    'propeller_velocity_BEM'],
                     promotes_outputs=['propeller_radii',
                                       'propeller_velocity'])
 
@@ -37,5 +35,3 @@ class SlipStreamModel(om.Group):
                                             'propeller_velocity'],
                            promotes_outputs=['correction_matrix',
                                              'velocity_distribution'])
-
-        # === Explicit connections ===

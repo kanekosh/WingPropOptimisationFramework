@@ -24,7 +24,7 @@ def meshing(span: float, chord: float, prop_locations: np.array, prop_radii: np.
     nx = 2  # number of chordwise nodal points (should be odd)
     # number of spanwise nodal points for the outboard segment
 
-    mesh = np.zeros((nx, ny, 3))
+    mesh = np.zeros((nx, ny, 3), order='F')
 
     mesh[:, :, 2] = 0.0
     mesh[:, :, 1] = y_vlm

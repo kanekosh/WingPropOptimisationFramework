@@ -1,5 +1,6 @@
 # --- Built-ins ---
 from dataclasses import dataclass
+import copy
 
 # --- Internal ---
 from src.utils.meshing import meshing
@@ -53,9 +54,14 @@ class PropInfo:
     airfoils: list[AirfoilInfo]
 
     rotation_axis: np.array = np.array([0., 0., 1.])
-    hub_offset: float = 0.05
+    hub_offset: float = 0.
 
     def __post_init__(self):
+        assert len(self.chord) == len(self.span)+1, ' Chord should be defined for blade nodes, \
+                                                        not control points (length of chord and twist should be one larger than span)'
+        assert len(self.twist) == len(self.span)+1, ' Twist should be defined for blade nodes, \
+                                                        not control points (length of chord and twist should be one larger than span)'
+
         self.prop_radius = np.zeros(len(self.span)+1)
         for index, ispan in enumerate(self.span):
             # TODO: this only works for a linearly spaced propeller
@@ -85,13 +91,13 @@ class WingPropInfo:
         self.prop_locations = np.zeros((self.nr_props), order='F')
         self.prop_radii = np.zeros(
             (self.nr_props, self.spanwise_discretisation_propeller_BEM+1), order='F')
-        
+
         # Merge the propeller information into a single array
         for index, _ in enumerate(self.prop_locations):
             self.prop_locations[index] = self.propeller[index].prop_location
             self.prop_radii[index] = self.propeller[index].prop_radius
 
-        self.vlm_mesh = meshing(span=self.wing.span, 
+        self.vlm_mesh = meshing(span=self.wing.span,
                                 chord=self.wing.chord[0],
                                 prop_locations=self.prop_locations,
                                 prop_radii=self.prop_radii,

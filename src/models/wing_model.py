@@ -34,7 +34,7 @@ class WingModel(om.Group):
                         "fem_model_type": "tube",
                         "thickness_cp": np.array([0.1, 0.2, 0.3]),
                         "twist_cp": twist_cp,
-                        "chord_cp": mesh,
+                        "chord_cp": chord_cp,
                         "mesh": mesh,
                         "span": winginfo.span,
                         "CL0": 0.0,  # CL of the surface at alpha=0
