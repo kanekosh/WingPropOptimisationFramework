@@ -56,10 +56,10 @@ class PropInfo:
     hub_offset: float = 0.05
 
     def __post_init__(self):
-        self.prop_radius = np.zeros(len(self.span+1))
+        self.prop_radius = np.zeros(len(self.span)+1)
         for index, ispan in enumerate(self.span):
             # TODO: this only works for a linearly spaced propeller
-            self.prop_radius[index+1] = index*ispan
+            self.prop_radius[index+1] = (index+1)*ispan
 
     def __str__(self):
         return f'Propeller {self.label}, with {self.nr_blades} blades'
@@ -79,25 +79,30 @@ class WingPropInfo:
     parameters: ParamInfo
 
     def __post_init__(self):
-        self.spanwise_discretisation = self.spanwise_discretisation_wing + \
+        self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \
             self.nr_props*self.spanwise_discretisation_propeller + 1
 
         self.prop_locations = np.zeros((self.nr_props), order='F')
         self.prop_radii = np.zeros(
-            (self.nr_props, self.spanwise_discretisation_propeller), order='F')
-
+            (self.nr_props, self.spanwise_discretisation_propeller_BEM+1), order='F')
+        
+        # Merge the propeller information into a single array
         for index, _ in enumerate(self.prop_locations):
             self.prop_locations[index] = self.propeller[index].prop_location
             self.prop_radii[index] = self.propeller[index].prop_radius
 
-        self.vlm_mesh = meshing(span=self.wing.span, prop_locations=self.prop_locations, prop_radii=self.prop_radii, nr_props=self.nr_props,
+        self.vlm_mesh = meshing(span=self.wing.span, 
+                                chord=self.wing.chord[0],
+                                prop_locations=self.prop_locations,
+                                prop_radii=self.prop_radii,
+                                nr_props=self.nr_props,
                                 spanwise_discretisation_wing=self.spanwise_discretisation_wing,
                                 spanwise_discretisation_propeller=self.spanwise_discretisation_propeller,
-                                total_panels=self.spanwise_discretisation)
+                                total_nodes=self.spanwise_discretisation_nodes)
 
         self.vlm_mesh_control_points = np.zeros(
-            len(self.vlm_mesh)-1, order='F')
+            self.spanwise_discretisation_nodes-1, order='F')
 
-        for panel in range(len(self.vlm_mesh)-1):
+        for panel in range(self.spanwise_discretisation_nodes-1):
             self.vlm_mesh_control_points[panel] = 0.5 * \
-                (self.vlm_mesh[panel]+self.vlm_mesh[panel+1])
+                (self.vlm_mesh[0, panel, 1]+self.vlm_mesh[0, panel+1, 1])

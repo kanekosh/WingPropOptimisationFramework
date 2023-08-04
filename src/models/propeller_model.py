@@ -15,7 +15,7 @@ import numpy as np
 
 class PropellerModel(om.Group):
     def initialize(self):
-        self.options.declare('PropellerInfo', default=PropInfo())
+        self.options.declare('PropellerInfo', default=PropInfo)
         
     def setup(self):
         # === Options ===
@@ -37,7 +37,7 @@ class PropellerModel(om.Group):
                 moment_calc=True,
                 power_calc=True,
                 loads_calc=True,
-                velocity_distribution_calc=False,
+                velocity_distribution_calc=True,
                 force_distribution_calc=False,
             ),
         )

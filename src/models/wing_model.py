@@ -13,7 +13,7 @@ import openmdao.api as om
 class WingModel(om.Group):
     
     def initialize(self):
-        self.options.declare('WingPropInfo', default=WingPropInfo())
+        self.options.declare('WingPropInfo', default=WingPropInfo)
         
     def setup(self):
         # === Options ===
@@ -22,8 +22,9 @@ class WingModel(om.Group):
         
         # === Components ===
         twist_cp = winginfo.twist
+        chord_cp = winginfo.chord
         
-        mesh = self.wingpropinfo.vlm_mesh
+        mesh = wingpropinfo.vlm_mesh
 
         surface = {
                         # === Wing definition ===
@@ -33,6 +34,7 @@ class WingModel(om.Group):
                         "fem_model_type": "tube",
                         "thickness_cp": np.array([0.1, 0.2, 0.3]),
                         "twist_cp": twist_cp,
+                        "chord_cp": mesh,
                         "mesh": mesh,
                         "span": winginfo.span,
                         "CL0": 0.0,  # CL of the surface at alpha=0
