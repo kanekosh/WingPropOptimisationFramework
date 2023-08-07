@@ -65,7 +65,7 @@ class PropInfo:
         self.prop_radius = np.zeros(len(self.span)+1)
         for index, ispan in enumerate(self.span):
             # TODO: this only works for a linearly spaced propeller
-            self.prop_radius[index+1] = (index+1)*ispan
+            self.prop_radius[index+1] = self.hub_offset+(index+1)*ispan
 
     def __str__(self):
         return f'Propeller {self.label}, with {self.nr_blades} blades'
@@ -83,6 +83,8 @@ class WingPropInfo:
     propeller: list[PropInfo]
     wing: WingInfo
     parameters: ParamInfo
+    
+    NO_CORRECTION: bool = False # set this to true if you want to run the system without a correction factor
 
     def __post_init__(self):
         self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \

@@ -31,4 +31,4 @@ def meshing(span: float, chord: float, prop_locations: np.array, prop_radii: np.
     mesh[:, :, 0] = np.zeros(ny)
     mesh[1, :, 0] = np.ones(ny)*chord
 
-    return mesh
+    return np.array(mesh, order='F')
