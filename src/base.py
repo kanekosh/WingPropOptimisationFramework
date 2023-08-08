@@ -28,6 +28,7 @@ class AirfoilInfo:
     Cl_alpha: float     # Cl alpha lift slope
     alpha_L0: float     # zero lift angle
     alpha_0: float      # stall angle
+    M: float = 50.
 
 
 @dataclass
@@ -54,7 +55,7 @@ class PropInfo:
     airfoils: list[AirfoilInfo]
 
     rotation_axis: np.array = np.array([0., 0., 1.])
-    hub_offset: float = 0.
+    ref_point: np.array = np.array([0., 0., 0.])
 
     def __post_init__(self):
         assert len(self.chord) == len(self.span)+1, ' Chord should be defined for blade nodes, \
@@ -65,7 +66,7 @@ class PropInfo:
         self.prop_radius = np.zeros(len(self.span)+1)
         for index, ispan in enumerate(self.span):
             # TODO: this only works for a linearly spaced propeller
-            self.prop_radius[index+1] = self.hub_offset+(index+1)*ispan
+            self.prop_radius[index+1] = self.ref_point[1]+(index+1)*ispan # TODO: simplification (index 1 shouldn't be hardcoded)
 
     def __str__(self):
         return f'Propeller {self.label}, with {self.nr_blades} blades'

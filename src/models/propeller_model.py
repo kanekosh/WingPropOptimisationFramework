@@ -47,7 +47,7 @@ class PropellerModel(om.Group):
     # rst simparam
     def _simparam_definition(self):
         simparam = py_simparam_def.t_simparam_def()
-        simparam.basename = "example0"
+        simparam.basename = "PropModel"
 
         simparam.nt = 5
         simparam.t_start = 0.0
@@ -98,7 +98,7 @@ class PropellerModel(om.Group):
 
         # Reference Parameters
         N_span = len(self.propellerinfo.span) # this defines nodes, NOT CONTROL POINTS
-        rotor.ref_point = np.array([0.0, 0.0, 0.0])
+        rotor.ref_point = self.propellerinfo.ref_point
         rotor.ref_chord_frac = 0.5
 
         # Symmetry Parameters
@@ -121,7 +121,7 @@ class PropellerModel(om.Group):
             "rot_axis": self.propellerinfo.rotation_axis,
             "rot_rate": self.propellerinfo.rot_rate,
             "psi_0": 0.0,
-            "hub_offset": self.propellerinfo.hub_offset,
+            "hub_offset": 0.,
             "n_dofs": 0,
         }
 
@@ -133,7 +133,7 @@ class PropellerModel(om.Group):
             rotor.sec[iSection].alpha_0 = self.propellerinfo.airfoils[iSection].alpha_0
             rotor.sec[iSection].alpha_L0 = self.propellerinfo.airfoils[iSection].alpha_L0
             rotor.sec[iSection].Cl_alpha = self.propellerinfo.airfoils[iSection].Cl_alpha
-            rotor.sec[iSection].M = 50 #MAGIC: this determine how steep the stall curve is
+            rotor.sec[iSection].M = self.propellerinfo.airfoils[iSection].M # this determine how steep the stall curve is
 
         # Span Sections
         for iSpan in range(N_span):
