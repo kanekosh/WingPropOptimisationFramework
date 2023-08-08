@@ -37,7 +37,7 @@ class WingModel(om.Group):
                         "chord_cp": chord_cp,
                         "mesh": mesh,
                         "span": winginfo.span,
-                        "CL0": 0.0,  # CL of the surface at alpha=0
+                        "CL0": winginfo.CL0,  # CL of the surface at alpha=0
                         "CD0": 0.015,  # CD of the surface at alpha=0
                         "k_lam": 0.05,  # percentage of chord with laminar flow, used for viscous drag
                         "t_over_c_cp": np.array([0.15]),  # thickness over chord ratio (NACA0015)

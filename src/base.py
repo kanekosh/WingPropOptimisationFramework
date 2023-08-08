@@ -40,6 +40,7 @@ class WingInfo:
     empty_weight: float
     load_factor: float = 1.
     empty_cg: np.array = np.zeros((3))
+    CL0: float = 0.
 
 
 @dataclass
@@ -86,6 +87,10 @@ class WingPropInfo:
     parameters: ParamInfo
     
     NO_CORRECTION: bool = False # set this to true if you want to run the system without a correction factor
+    NO_PROPELLER: bool = False # Set this to true to run system without propeller or correction
+    
+    if NO_PROPELLER:
+        assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
     def __post_init__(self):
         self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \
