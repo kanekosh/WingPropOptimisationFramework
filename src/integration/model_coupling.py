@@ -112,3 +112,38 @@ class WingSlipstreamProp(om.Group):
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.velocity_distribution")
         self.connect("RETHORST.correction_matrix",
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.rethorst_correction")
+
+class IsolatedProp(om.Group):
+    def initialize(self):
+        self.options.declare('WingPropInfo', default=WingPropInfo)
+
+    def setup(self):
+        # === Options ===
+        wingpropinfo = self.options["WingPropInfo"]
+
+        # === Components ===
+        self.add_subsystem('PARAMETERS', subsys=Parameters(
+            WingPropInfo=wingpropinfo))
+
+        self.add_subsystem('DESIGNVARIABLES', subsys=DesignVariables(
+            WingPropInfo=wingpropinfo))
+
+        for propeller_nr in range(wingpropinfo.nr_props):
+            self.add_subsystem(f'HELIX_{propeller_nr}',
+                               subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
+                                                     PropInfo=wingpropinfo.propeller[propeller_nr]))
+
+        # === Explicit connections ===
+        # PARAMS to HELIX
+        for index, _ in enumerate(wingpropinfo.propeller):
+            self.connect(f"PARAMETERS.rotor_{index}_radius",
+                         f"HELIX_{index}.om_helix.geodef_parametric_0_span")
+
+        # DVs to HELIX
+        for index, _ in enumerate(wingpropinfo.propeller):
+            self.connect(f"DESIGNVARIABLES.rotor_{index}_twist",
+                         f"HELIX_{index}.om_helix.geodef_parametric_0_twist")
+            self.connect(f"DESIGNVARIABLES.rotor_{index}_chord",
+                         f"HELIX_{index}.om_helix.geodef_parametric_0_chord")
+            self.connect(f"DESIGNVARIABLES.rotor_{index}_rot_rate",
+                         f"HELIX_{index}.om_helix.geodef_parametric_0_rot_rate")

@@ -35,7 +35,7 @@ class Parameters(om.IndepVarComp):
         
         # Propeller Parameters
         for index, _ in enumerate(wingpropinfo.propeller):
-            self.add_output(f"rotor_{index}_radius", val=wingpropinfo.propeller[index].span, units="m")
+            self.add_output(f"rotor_{index}_radius", val=wingpropinfo.propeller[index].span)
         
         self.add_output("propeller_locations",
                         val=wingpropinfo.prop_locations, units="m")

@@ -73,7 +73,7 @@ class PropellerModel(om.Group):
         Hub.Name = "Hub"
         Hub.Parent = "Root"
         Hub.origin = np.array([0.0, 0.0, 0.0])
-        Hub.orientation = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+        Hub.orientation = self.propellerinfo.hub_orientation
 
         Hub.moving = False
 

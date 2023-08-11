@@ -57,6 +57,7 @@ class PropInfo:
 
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])
+    hub_orientation: np.array = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 
     def __post_init__(self):
         assert len(self.chord) == len(self.span)+1, ' Chord should be defined for blade nodes, \
