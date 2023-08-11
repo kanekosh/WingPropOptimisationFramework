@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 # forbidden files
-examples/analysis/data/PROWIM.json
+examples/analysis/data/*

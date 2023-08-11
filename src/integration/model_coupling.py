@@ -95,8 +95,8 @@ class WingSlipstreamProp(om.Group):
         # DVs to OPENAEROSTRUCT
         self.connect('DESIGNVARIABLES.twist',
                      'OPENAEROSTRUCT.wing.twist_cp')
-        self.connect('DESIGNVARIABLES.chord',
-                     'OPENAEROSTRUCT.wing.geometry.chord_cp')
+        # self.connect('DESIGNVARIABLES.chord',
+        #              'OPENAEROSTRUCT.wing.geometry.chord_cp')
         self.connect('DESIGNVARIABLES.span',
                      'OPENAEROSTRUCT.wing.geometry.span')
 

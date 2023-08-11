@@ -35,6 +35,7 @@ M = data['M']
 
 wing_twist = 0.
 wing_chord = 0.24
+wingspan = 0.73*2.*0.952
 
 spanwise_discretisation_propeller_BEM = len(span)
 
@@ -72,14 +73,15 @@ prop2 = PropInfo(label='Prop1',
                  )
 
 parameters = ParamInfo(vinf=40.,
-                       wing_aoa=2.,
+                       wing_aoa=0.,
                        mach_number=0.2,
-                       reynolds_number=5.e6,
-                       speed_of_sound=333.4)
+                       reynolds_number=640_000,
+                       speed_of_sound=333.4,
+                       air_density=1.2087)
 
 
-wing = WingInfo(label='SampleWing',
-                span=0.748*2*0.976,
+wing = WingInfo(label='PROWIM_wing',
+                span=wingspan,
                 chord=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*wing_chord,
                 twist=np.ones(spanwise_discretisation_propeller_BEM,
@@ -91,7 +93,7 @@ wing = WingInfo(label='SampleWing',
 
 wingpropinfo = WingPropInfo(nr_props=2,
                             spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=11,
+                            spanwise_discretisation_propeller=51,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
                             wing=wing,
@@ -115,7 +117,7 @@ class WingSlipstreamPropAnalysis(om.Group):
 if __name__ == '__main__':
     # === Generate numerical data ===
     CL_numerical = []
-    J = np.array([0.796, 1.0])
+    J = np.array([0.796, 1.0, float('nan')])
     rot_rate = (wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
     angles = np.arange(-8, 10, 1)
     
@@ -126,6 +128,20 @@ if __name__ == '__main__':
         for index_propeller, _ in enumerate(wingpropinfo.propeller):
             wingpropinfo.propeller[index_propeller].rot_rate = rot_rate[index_rotational]
         
+        if np.isnan(rot_rate[index_rotational]):
+            wingpropinfo.NO_CORRECTION=True
+            wingpropinfo.NO_PROPELLER=True
+        
+        elif J[index_rotational]==0.796:
+            wingpropinfo.NO_CORRECTION=False
+            wingpropinfo.NO_PROPELLER=False
+            wingpropinfo.wing.CL0 = 0.3227
+            
+        else:
+            wingpropinfo.NO_CORRECTION=False
+            wingpropinfo.NO_PROPELLER=False
+            wingpropinfo.wing.CL0 = 0.283
+
         for angle in angles:
             print(f'Angle of attack: {angle: ^10}')
             wingpropinfo.parameters.wing_aoa = angle
@@ -133,8 +149,8 @@ if __name__ == '__main__':
             prob.model = WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo)
             prob.setup()
             prob.run_model()
-            
-            CL_numerical_tmp.append(prob["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.CL"].tolist()[0])
+
+            CL_numerical_tmp.append(prob["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CL"].tolist()[0])      
             
         CL_numerical.append(CL_numerical_tmp)
 
@@ -146,10 +162,10 @@ if __name__ == '__main__':
     n=0
     index1 = n*19
     index2 = (n+1)*19
-    aoa = data['AoA'][index1:index2]
-    CL_Jinf = data['CL'][index1:index2]
-    CD_Jinf = data['CD'][index1:index2]
-    J_inf = data['J'][index1+1]
+    aoa = validation_data['AoA'][index1:index2]
+    CL_Jinf = validation_data['CL'][index1:index2]
+    CD_Jinf = validation_data['CD'][index1:index2]
+    J_inf = validation_data['J'][index1+1]
     
     # Validation data for J=1
     n=1
@@ -175,12 +191,16 @@ if __name__ == '__main__':
     
     ax.plot(angles, CL_numerical[0], label='Numerical, J=0.796', color='b')
     ax.plot(angles, CL_numerical[1], label=f'Numerical, J=1.0', color='orange')
+    ax.plot(angles, CL_numerical[2], label=f'Numerical, J=inf', color='grey')
+
     ax.scatter(aoa, CL_J0796, label=f'Experimental, J=0.7962', color='b')
     ax.scatter(aoa, CL_J1, label=f'Experimental, J=1.0', color='orange')
+    ax.scatter(aoa, CL_Jinf, label=f'Experimental, J=inf', color='grey')
+    
     
     ax.set_xlabel("Angle of Attack (deg)")
     ax.set_ylabel(r"Lift Coefficient ($C_L$)")
-    ax.legend()
+    ax.legend(fontsize='12')
 
     niceplots.adjust_spines(ax, outward=True)
 
