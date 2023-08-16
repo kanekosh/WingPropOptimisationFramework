@@ -17,7 +17,6 @@ import niceplots
 
 BASE_DIR = Path(__file__).parents[0]
 
-
 # === Read in PROWIM data ===
 with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
     data = json.load(file)
@@ -56,7 +55,7 @@ prop1 = PropInfo(label='Prop1',
                                        alpha_0=alpha_0[index],
                                        M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
-                 ref_point=np.array([0.0, 0.0174195, 0.0]),#ref_point,
+                 ref_point=np.array([0.0, 0.0174195, 0.0]),
                  hub_orientation=np.array([[1.0, 0.0, 0.0],
                                            [0.0, 1.0*np.cos(np.deg2rad(-0.2)),
                                             1.0*np.sin(np.deg2rad(-0.2))],

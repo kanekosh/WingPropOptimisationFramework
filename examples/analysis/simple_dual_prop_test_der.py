@@ -86,28 +86,10 @@ if __name__ == '__main__':
     prob = om.Problem()
     prob.model = WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo)
 
-    prob.setup()
+    prob.setup(mode='fwd')
     prob.run_model()
-    Cl_corr = prob['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl']
-
-    prob.model.options['WingPropInfo'].NO_CORRECTION = True
-    prob.setup()
-    prob.run_model()
-
-    Cl_nocorr = prob['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl']
-
-    plt.style.use(niceplots.get_style())
-    _, ax = plt.subplots(figsize=(10, 7))
-
-    spanwise = np.linspace(-wingpropinfo.wing.span/2,
-                           wingpropinfo.wing.span/2,
-                           len(Cl_nocorr))
-    ax.plot(spanwise, Cl_nocorr, label='Lift coefficient, no correction')
-    ax.plot(spanwise, Cl_corr, label='Lift coefficient, with correction')
-
-    ax.set_xlabel(r'Spanwise location $y$')
-    ax.set_ylabel(r'$C_L\cdot c$')
-    ax.legend()
-    niceplots.adjust_spines(ax, outward=True)
-
-    plt.savefig('figure.png')
+    partials = prob.check_partials(compact_print=True, show_only_incorrect=True, 
+                                   includes=['*PropellerSlipstreamWingModel.RETHORST*'], 
+                                   form='central', step=1e-10)
+    
+    a=1

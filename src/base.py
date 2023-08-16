@@ -1,6 +1,6 @@
 # --- Built-ins ---
 from dataclasses import dataclass
-import copy
+import json
 
 # --- Internal ---
 from src.utils.meshing import meshing
