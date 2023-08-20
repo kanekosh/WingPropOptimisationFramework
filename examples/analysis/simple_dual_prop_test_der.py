@@ -86,7 +86,7 @@ if __name__ == '__main__':
     prob = om.Problem()
     prob.model = WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo)
 
-    prob.setup(mode='fwd')
+    prob.setup()
     prob.run_model()
     partials = prob.check_partials(compact_print=True, show_only_incorrect=True, 
                                    includes=['*PropellerSlipstreamWingModel.RETHORST*'], 
