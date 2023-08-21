@@ -1,7 +1,7 @@
 # --- Built-ins ---
 
 # --- Internal ---
-from src.base import ParamInfo, PropInfo
+from src.base import ParamInfo, PropInfo, WingPropInfo
 import helix.parameters.simparam_def as py_simparam_def
 import helix.references.references_def as py_ref_def
 import helix.geometry.geometry_def as py_geo_def
@@ -11,6 +11,43 @@ import helix.openmdao.om_helix as om_helix
 # --- External ---
 import openmdao.api as om
 import numpy as np
+
+TIME_STEPS_HELIX = 7 # timesteps taken by helix
+
+class PropellerCoupled(om.ExplicitComponent):
+    def initialize(self):
+        self.options.declare('WingPropInfo', default=WingPropInfo)
+        
+    def setup(self):
+        # === Options ===
+        self.wingpropinfo = self.options["WingPropInfo"]
+        
+        # === Inputs ===
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            self.add_input(f'thrust_prop_{propeller_nr}', shape_by_conn=True)
+            self.add_input(f'power_prop_{propeller_nr}', shape_by_conn=True)
+                # the 'shape_by_conn=True' is not best practice but HELIX time dependent so it was necessary
+            
+        # === Outputs ===
+        self.add_output('thrust_total', shape=1)
+        self.add_output('power_total', shape=1)
+        
+        # === Partials ===
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            self.declare_partials('thrust_total', f'thrust_prop_{propeller_nr}', 
+                                    rows=[0], cols=[3*TIME_STEPS_HELIX-1], val=1)
+            self.declare_partials('power_total', f'power_prop_{propeller_nr}', 
+                                    rows=[0], cols=[0], val=1)
+        
+    def compute(self, inputs, outputs):
+        thrust, power = [], []
+        
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            thrust.append(inputs[f'thrust_prop_{propeller_nr}'][2, TIME_STEPS_HELIX-1]) # only last entries contain the value
+            power.append(inputs[f'power_prop_{propeller_nr}'][0])
+            
+        outputs['thrust_total'] = np.sum(thrust)
+        outputs['power_total'] = np.sum(power)
 
 
 class PropellerModel(om.Group):
@@ -49,7 +86,7 @@ class PropellerModel(om.Group):
         simparam = py_simparam_def.t_simparam_def()
         simparam.basename = "PropModel"
 
-        simparam.nt = 5
+        simparam.nt = TIME_STEPS_HELIX
         simparam.t_start = 0.0
         simparam.t_end = 0.1
 

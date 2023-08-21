@@ -3,7 +3,7 @@ import unittest
 
 # --- Internal ---
 from src.base import WingPropInfo
-from src.models.propeller_model import PropellerModel
+from src.models.propeller_model import PropellerModel, PropellerCoupled
 from src.models.wing_model import WingModel
 from src.models.slipstream_model import SlipStreamModel
 from src.models.parameters import Parameters
@@ -33,12 +33,15 @@ class WingSlipstreamProp(om.Group):
             self.add_subsystem(f'HELIX_{propeller_nr}',
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
                                                      PropInfo=wingpropinfo.propeller[propeller_nr]))
-
+        
         self.add_subsystem('RETHORST',
                            subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
 
         self.add_subsystem('OPENAEROSTRUCT',
                            subsys=WingModel(WingPropInfo=wingpropinfo))
+        
+        self.add_subsystem('HELIX_COUPLED', 
+                           subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
 
         # === Explicit connections ===
         # PARAMS to HELIX
@@ -106,6 +109,13 @@ class WingSlipstreamProp(om.Group):
                         f"RETHORST.interpolation.propeller_radii_BEM_rotor{index}")
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_velocity_distribution",
                         f"RETHORST.interpolation.propeller_velocity_BEM_rotor{index}")
+            
+        # HELIX to HELIX_COUPLED
+        for index in range(wingpropinfo.nr_props):
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_thrust",
+                        f"HELIX_COUPLED.thrust_prop_{index}")
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_power",
+                        f"HELIX_COUPLED.power_prop_{index}")
 
         # RETHORST to OPENAEROSTRUCT
         self.connect("RETHORST.velocity_distribution",

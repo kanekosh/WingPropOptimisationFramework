@@ -6,7 +6,7 @@ import copy
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.tools.tools import print_results
+from src.tools.tools import print_results, plot_CL
 from src.integration.model_coupling import WingSlipstreamProp
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
@@ -20,15 +20,28 @@ import niceplots
 logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
-objective = 'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.CD'
+objective = {'PropellerSlipstreamWingModel.HELIX_COUPLED.power_total':
+                {'scaler': 1000}}
 design_vars = {'PropellerSlipstreamWingModel.DESIGNVARIABLES.twist':
                     {'lb': -10,
                     'ub': 10,
-                    'scaler': 1.}
+                    'scaler': 1.},
+                'PropellerSlipstreamWingModel.DESIGNVARIABLES.rotor_0_twist':
+                    {'lb': 0,
+                    'ub': 90,
+                    'scaler': 1./45},
+                'PropellerSlipstreamWingModel.DESIGNVARIABLES.rotor_1_twist':
+                    {'lb': 0,
+                    'ub': 90,
+                    'scaler': 1./45}
                 }
 
 constraints = {'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.CL':
-                    {'equals': 0.08104193}
+                    {'equals': 0.08104193},
+                'PropellerSlipstreamWingModel.HELIX_COUPLED.thrust_total':
+                    {'equals': 10.},
+                'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.D':
+                    {'equals': 20.}
                 }
 
 class WingSlipstreamPropAnalysis(om.Group):
@@ -53,31 +66,25 @@ class WingSlipstreamPropAnalysis(om.Group):
                                 equals=constraints[constraints_key]['equals'])
 
         # === Add objective ===
-        self.add_objective(objective,
-                           scaler=1000)
+        for objective_key in objective.keys():
+            self.add_objective(objective_key,
+                            scaler=objective[objective_key]['scaler'])
 
 
 if __name__ == '__main__':
     prob = om.Problem()
     prob.model = WingSlipstreamPropAnalysis(WingPropInfo=PROWIM_wingpropinfo)
 
-    print('==========================================================')
-    print('==================== Initial Analysis ====================')
-    print('==========================================================')
-
+    # === Analysis ===
     prob.setup()
     prob.run_model()
     
-    print(objective, ' :  ', prob[objective])
-    
-    for design_var_key in design_vars.keys():
-        print(design_var_key, ' : ', prob[design_var_key])
-        
-    for constraint_key in constraints.keys():
-        print(constraint_key, ' : ', prob[constraint_key])
+    print_results(design_vars=design_vars, constraints=constraints, objective=objective,
+                  prob=prob, kind="Initial Analysis")
         
     Cl_orig = prob['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl'].copy()
     
+    # === Optimisation ===
     prob.driver = om.ScipyOptimizeDriver()
     prob.driver.options['optimizer'] = 'SLSQP'
     prob.driver.opt_settings = {
@@ -98,30 +105,11 @@ if __name__ == '__main__':
     prob.run_driver()
 
     Cl_opt = prob['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl']
+
+    print_results(design_vars=design_vars, constraints=constraints, objective=objective,
+                  prob=prob, kind="Results")
     
-    print('==========================================================')
-    print('======================= Results ==========================')
-    print('==========================================================')
-    print(objective, ' :  ', prob[objective])
+    # === Plotting ===
+    savepath = os.path.join(BASE_DIR, 'results', 'optimisation_results.png')
     
-    for design_var_key in design_vars.keys():
-        print(design_var_key, ' : ', prob[design_var_key])
-        
-    for constraint_key in constraints.keys():
-        print(constraint_key, ' : ', prob[constraint_key])
-
-    plt.style.use(niceplots.get_style())
-    _, ax = plt.subplots(figsize=(10, 7))
-
-    spanwise = np.linspace(-PROWIM_wingpropinfo.wing.span/2,
-                           PROWIM_wingpropinfo.wing.span/2,
-                           len(Cl_opt))
-    ax.plot(spanwise, Cl_orig, label='Lift coefficient, original')
-    ax.plot(spanwise, Cl_opt, label='Lift coefficient, optimised')
-
-    ax.set_xlabel(r'Spanwise location $y$')
-    ax.set_ylabel(r'$C_L\cdot c$')
-    ax.legend()
-    niceplots.adjust_spines(ax, outward=True)
-
-    plt.savefig(os.path.join(BASE_DIR, 'results', 'optimisation_results.png'))
+    plot_CL(BASE_DIR=BASE_DIR, span=PROWIM_wingpropinfo.wing.span, Cl_opt=Cl_opt, Cl_orig=Cl_orig, savepath=savepath)

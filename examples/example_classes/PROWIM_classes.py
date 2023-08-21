@@ -9,11 +9,11 @@ from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
 # --- External ---
 import numpy as np
 
-BASE_DIR = Path(__file__).parents[0]
+BASE_DIR = Path(__file__).parents[1]
 
 
 # === Read in PROWIM data ===
-with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
+with open(os.path.join(BASE_DIR, 'analysis', 'data', 'PROWIM.json'), 'r') as file:
     data = json.load(file)
 
 prop_radius = 0.1185
