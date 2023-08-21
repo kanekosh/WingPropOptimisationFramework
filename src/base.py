@@ -76,7 +76,6 @@ class PropInfo:
 
 @dataclass
 class WingPropInfo:
-    nr_props: int
     spanwise_discretisation_wing: int
     spanwise_discretisation_propeller: int
     # TODO: right now it is assumed that all propellers have the same discretisation.
@@ -94,6 +93,7 @@ class WingPropInfo:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
     def __post_init__(self):
+        self.nr_props = len(self.propeller)
         self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \
             self.nr_props*self.spanwise_discretisation_propeller + 1
 

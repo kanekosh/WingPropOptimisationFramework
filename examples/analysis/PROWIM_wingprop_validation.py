@@ -40,10 +40,17 @@ wingspan = 0.73*2.*0.952
 spanwise_discretisation_propeller_BEM = len(span)
 
 
+parameters = ParamInfo(vinf=40.,
+                       wing_aoa=0.,
+                       mach_number=0.2,
+                       reynolds_number=640_000,
+                       speed_of_sound=333.4,
+                       air_density=1.2087)
+
 prop1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
                  nr_blades=4,
-                 rot_rate=300.,
+                 rot_rate=(parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
@@ -59,7 +66,7 @@ prop1 = PropInfo(label='Prop1',
 prop2 = PropInfo(label='Prop1',
                  prop_location=0.332,
                  nr_blades=4,
-                 rot_rate=300.,
+                 rot_rate=(parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
@@ -71,13 +78,6 @@ prop2 = PropInfo(label='Prop1',
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point
                  )
-
-parameters = ParamInfo(vinf=40.,
-                       wing_aoa=0.,
-                       mach_number=0.2,
-                       reynolds_number=640_000,
-                       speed_of_sound=333.4,
-                       air_density=1.2087)
 
 
 wing = WingInfo(label='PROWIM_wing',
@@ -91,8 +91,7 @@ wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-wingpropinfo = WingPropInfo(nr_props=2,
-                            spanwise_discretisation_wing=60,
+wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
                             spanwise_discretisation_propeller=51,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],

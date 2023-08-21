@@ -60,8 +60,8 @@ prop2 = PropInfo(label='Prop2',
                  )
 
 wingpropinfo = WingPropInfo(nr_props=2,
-                            spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=11,
+                            spanwise_discretisation_wing=30,
+                            spanwise_discretisation_propeller=5,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
                             wing=wing,
@@ -91,5 +91,4 @@ if __name__ == '__main__':
     partials = prob.check_partials(compact_print=True, show_only_incorrect=True, 
                                    includes=['*PropellerSlipstreamWingModel.RETHORST*'], 
                                    form='central', step=1e-10)
-    
     a=1
