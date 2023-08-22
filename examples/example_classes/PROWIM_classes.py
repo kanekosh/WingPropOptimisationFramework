@@ -41,8 +41,24 @@ PROWIM_parameters = ParamInfo(vinf=40.,
                        speed_of_sound=333.4,
                        air_density=1.2087)
 
-PROWIM_prop = PropInfo(label='Prop1',
+PROWIM_prop_1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
+                 nr_blades=4,
+                 rot_rate=(PROWIM_parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                 chord=np.array(chord, order='F'),
+                 twist=np.array(twist, order='F'),
+                 span=np.array(span, order='F'),
+                 airfoils=[AirfoilInfo(label=f'Foil_{index}',
+                                       Cl_alpha=Cl_alpha[index],
+                                       alpha_L0=alpha_L0[index],
+                                       alpha_0=alpha_0[index],
+                                        M=M[index])
+                           for index in range(spanwise_discretisation_propeller_BEM+1)],
+                 ref_point=ref_point
+                 )
+
+PROWIM_prop_2 = PropInfo(label='Prop1',
+                 prop_location=0.332,
                  nr_blades=4,
                  rot_rate=(PROWIM_parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
                  chord=np.array(chord, order='F'),
@@ -69,10 +85,10 @@ PROWIM_wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=51,
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=30,
+                            spanwise_discretisation_propeller=11,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
-                            propeller=[PROWIM_prop, PROWIM_prop],
+                            propeller=[PROWIM_prop_1, PROWIM_prop_2],
                             wing=PROWIM_wing,
                             parameters=PROWIM_parameters
                             )

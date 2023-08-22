@@ -79,11 +79,15 @@ if __name__ == '__main__':
     prob.setup()
     prob.run_model()
     
+    partials = prob.check_partials(compact_print=True, show_only_incorrect=True, 
+                                   includes=['*PropellerSlipstreamWingModel.RETHORST*'], 
+                                   form='central', step=1e-8)
+
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
         
     Cl_orig = prob['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl'].copy()
-    
+    quit()
     # === Optimisation ===
     prob.driver = om.ScipyOptimizeDriver()
     prob.driver.options['optimizer'] = 'SLSQP'

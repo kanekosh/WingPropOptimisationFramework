@@ -12,7 +12,7 @@ import helix.openmdao.om_helix as om_helix
 import openmdao.api as om
 import numpy as np
 
-TIME_STEPS_HELIX = 7 # timesteps taken by helix
+TIME_STEPS_HELIX = 5 # timesteps taken by helix
 
 class PropellerCoupled(om.ExplicitComponent):
     def initialize(self):

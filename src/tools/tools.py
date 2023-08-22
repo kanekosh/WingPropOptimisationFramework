@@ -14,7 +14,9 @@ def print_results(design_vars: dict, constraints: dict, objective: dict,
     print('============================================================')
     print(f'{kind:=^60}')
     print('============================================================')
-    print(objective, ' :  ', prob[objective])
+    
+    for objective_key in objective.keys():
+        print(objective_key, ' :  ', prob[objective_key])
     
     for design_var_key in design_vars.keys():
         print(design_var_key, ' : ', prob[design_var_key])
