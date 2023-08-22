@@ -7,7 +7,7 @@ from src.base import WingPropInfo
 import openmdao.api as om
 import numpy as np
 
-
+# TODO: move this to a new variable directory
 class DesignVariables(om.IndepVarComp):
     def initialize(self):
         self.options.declare('WingPropInfo', default=WingPropInfo)

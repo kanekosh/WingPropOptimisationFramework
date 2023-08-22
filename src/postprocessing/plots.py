@@ -1,7 +1,9 @@
 # --- Built-ins ---
+import os
 
 # --- Internal ---
 from src.base import WingPropInfo
+from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
 import matplotlib.pyplot as plt
@@ -10,26 +12,45 @@ from openmdao.recorders.sqlite_reader import SqliteCaseReader
 import numpy as np
 
 
-def all_plots(db_name: str, nr_design_variables: int,
-              wingpropinfo: WingPropInfo)->None:
-    cr = case_reader = SqliteCaseReader(db_name, pre_load=True)
-    last_case = next(reversed(cr.get_cases("driver")))
+def all_plots(db_name: str,
+              wingpropinfo: WingPropInfo,
+              savedir: str,
+              *kwargs)->None:
+    database = SqliteCaseReader(db_name, pre_load=True)
     
-    first_case = cr.get_cases()[0]
-    first_case_vars = first_case.outputs
+    first_case = database.get_cases()[0]
+    design_variables_orig = first_case.get_design_vars()
+    constraints_orig = first_case.get_constraints()
+    objective_orig = first_case.get_objectives()
     
-    design_variables, output_variables = {}, {}
+    last_case = database.get_cases()[-1]
+    design_variables_opt = last_case.get_design_vars()
+    constraints_opt = last_case.get_constraints()
+    objective_opt = last_case.get_objectives()
     
-    for index, var_key in enumerate(first_case_vars.keys()):
-        if index<nr_design_variables:
-            design_variables[var_key] = first_case_vars[var_key]
-        else:
-            output_variables[var_key] = first_case_vars[var_key]
+    # === Plotting design variables ===
+    for dv_key in design_variables_orig.keys():
+        variable_orig = design_variables_orig[dv_key]
+        variable_opt = design_variables_opt[dv_key]
         
-    # === Lift distribution ===
-    span = wingpropinfo.wing.span
-    span_distribution
-    optimisation_result_plot(xlabel=-r'Spanwise location $y$', ylabel=r'$C_L\cdot c$')
+        str_lst = dv_key.split(".")
+        var_name = str_lst[-1]
+        
+        if var_name[:5]=='rotor':
+            # Propeller Plotting
+            variable = var_name[8:]
+            var_x = np.linspace(0, 1, len(variable_orig))
+            optimisation_result_plot(design_variable_array=var_x, original=variable_orig, optimised=variable_opt,
+                label=var_name, xlabel=r'Propeller spanwise location $y$', ylabel=var_name,
+                savepath=os.path.join(savedir, f'Prop_{variable}'))
+        
+        else:
+            # Wing Plotting
+            span = wingpropinfo.wing.span
+            var_x = np.linspace(-span/2, span/2, len(variable_orig))
+            optimisation_result_plot(design_variable_array=var_x, original=variable_orig, optimised=variable_opt,
+                label=var_name, xlabel=r'Wing spanwise location', ylabel=var_name,
+                savepath=os.path.join(savedir, f'Wing_{var_name}'))
 
 def optimisation_result_plot(design_variable_array: np.array, original: np.array, optimised: np.array, 
                             label: str, xlabel: str, ylabel: str,
@@ -51,27 +72,7 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
 def wing_plots():
     ...
 
-def plot_coefficient(span: float, 
-                    coefficient_optimised: np.array, Cl_orig: np.array,
-                    savepath: str)->None:
-    
-    plt.style.use(niceplots.get_style())
-    _, ax = plt.subplots(figsize=(10, 7))
-
-    spanwise = np.linspace(-span/2,
-                           span/2,
-                           len(coefficient_optimised))
-    ax.plot(spanwise, Cl_orig, label='Lift coefficient, original')
-    ax.plot(spanwise, coefficient_optimised, label='Lift coefficient, optimised')
-
-    ax.set_xlabel(r'Spanwise location $y$')
-    ax.set_ylabel(r'$C_L\cdot c$')
-    ax.legend()
-    niceplots.adjust_spines(ax, outward=True)
-
-    plt.savefig(savepath)
-
 if __name__=='__main__':
-    all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data_sample.db',
-              nr_design_variables=2,
-              nr_outputs=2)
+    all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db',
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir='.')

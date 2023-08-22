@@ -1,4 +1,5 @@
 # --- Built-ins ---
+import os
 
 # --- Internal ---
 from src.base import WingPropInfo

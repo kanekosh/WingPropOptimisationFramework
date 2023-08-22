@@ -37,7 +37,7 @@ spanwise_discretisation_propeller_BEM = len(span)
 
 
 PROWIM_parameters = ParamInfo(vinf=40.,
-                       wing_aoa=0.,
+                       wing_aoa=2.,
                        mach_number=0.2,
                        reynolds_number=640_000,
                        speed_of_sound=333.4,

@@ -30,10 +30,16 @@ if __name__ == '__main__':
                         {'lb': 0,
                         'ub': 90,
                         'scaler': 1./45},
+                    'PropellerSlipstreamWingModel.DESIGNVARIABLES.twist':
+                        {'lb': -5,
+                        'ub': 5,
+                        'scaler': 1},
                     }
 
     constraints = {'PropellerSlipstreamWingModel.HELIX_COUPLED.thrust_total':
-                        {'equals': 15.22511642}
+                        {'equals': 15.22511642},
+                    'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CL':
+                        {'equals': 0.5}
                     }
     
     prob = om.Problem()
@@ -41,7 +47,7 @@ if __name__ == '__main__':
                                                 objective=objective,
                                                 constraints=constraints,
                                                 design_vars=design_vars)
-
+    model = prob.model
     # === Analysis ===
     prob.setup()
     prob.run_model()
@@ -62,15 +68,18 @@ if __name__ == '__main__':
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SLSQP'
     prob.driver.opt_settings = {
-        # "MAXIT": 2,
+        "MAXIT": 10,
         # 'IFILE': os.path.join(BASE_DIR, 'results', 'optimisation_log.out')
     }
     
         # Initialise recorder
     db_name = os.path.join(BASE_DIR, 'results', 'data.db')
+    savepath = os.path.join(BASE_DIR, 'results')
+    
     recorder = om.SqliteRecorder(db_name)
     prob.driver.add_recorder(recorder)
-    prob.driver.recording_options['includes'] = ['PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.liftcoeff.Cl']
+    prob.driver.add_recorder(recorder)
+    prob.driver.recording_options['includes'] = ["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.Cl"]
     
     print('==========================================================')
     print('====================== Optimisation ======================')
@@ -84,5 +93,7 @@ if __name__ == '__main__':
                   prob=prob, kind="Results")
     
     # === Plotting ===
-    savepath = os.path.join(BASE_DIR, 'results', 'optimisation_results.png')
-    all_plots(db_name=db_name, nr_design_variables=len(design_vars.keys()))
+    savepath = os.path.join(BASE_DIR, 'results')
+    all_plots(db_name=db_name,
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir=savepath)
