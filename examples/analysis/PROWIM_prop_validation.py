@@ -6,6 +6,7 @@ import json
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
 from src.integration.model_coupling import IsolatedProp
+from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
 import numpy as np
@@ -101,8 +102,7 @@ wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-wingpropinfo = WingPropInfo(nr_props=2,
-                            spanwise_discretisation_wing=60,
+wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
                             spanwise_discretisation_propeller=51,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
@@ -117,7 +117,7 @@ class PropAnalysis(om.Group):
 
     def setup(self):
         self.add_subsystem('PropellerModel',
-                           subsys=IsolatedProp(WingPropInfo=wingpropinfo))
+                           subsys=IsolatedProp(WingPropInfo=PROWIM_wingpropinfo))
 
     def configure(self):
         # Empty because we do analysis

@@ -27,6 +27,8 @@ alpha_L0 = data['alpha_L0']
 Cl_alpha = data['Cl_alpha']
 M = data['M']
 
+J = 1.0 # advance ratio
+
 wing_twist = 0.
 wing_chord = 0.24
 wingspan = 0.73*2.*0.952
@@ -44,7 +46,7 @@ PROWIM_parameters = ParamInfo(vinf=40.,
 PROWIM_prop_1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
                  nr_blades=4,
-                 rot_rate=(PROWIM_parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                 rot_rate=(PROWIM_parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi, # in rad/s,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
@@ -60,7 +62,7 @@ PROWIM_prop_1 = PropInfo(label='Prop1',
 PROWIM_prop_2 = PropInfo(label='Prop1',
                  prop_location=0.332,
                  nr_blades=4,
-                 rot_rate=(PROWIM_parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                 rot_rate=(PROWIM_parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi, # in rad/s,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),

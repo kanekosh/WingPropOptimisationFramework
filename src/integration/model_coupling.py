@@ -8,6 +8,7 @@ from src.models.wing_model import WingModel
 from src.models.slipstream_model import SlipStreamModel
 from src.models.parameters import Parameters
 from src.models.design_variables import DesignVariables
+from src.constraints.constraints import ConstraintsThrustDrag
 
 # --- External ---
 import numpy as np
@@ -23,12 +24,14 @@ class WingSlipstreamProp(om.Group):
         wingpropinfo = self.options["WingPropInfo"]
 
         # === Components ===
+            # Inputs
         self.add_subsystem('PARAMETERS', subsys=Parameters(
             WingPropInfo=wingpropinfo))
 
         self.add_subsystem('DESIGNVARIABLES', subsys=DesignVariables(
             WingPropInfo=wingpropinfo))
 
+            # Modules
         for propeller_nr in range(wingpropinfo.nr_props):
             self.add_subsystem(f'HELIX_{propeller_nr}',
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
@@ -43,6 +46,10 @@ class WingSlipstreamProp(om.Group):
         self.add_subsystem('HELIX_COUPLED', 
                            subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
 
+            # Outputs
+        self.add_subsystem('CONSTRAINTS', 
+                           subsys=ConstraintsThrustDrag())
+        
         # === Explicit connections ===
         # PARAMS to HELIX
         for index, _ in enumerate(wingpropinfo.propeller):
@@ -122,6 +129,14 @@ class WingSlipstreamProp(om.Group):
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.velocity_distribution")
         self.connect("RETHORST.correction_matrix",
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.rethorst_correction")
+        
+        # OPENAEROSTRUCT to CONSTRAINTS
+        self.connect('OPENAEROSTRUCT.AS_point_0.total_perf.D',
+                     'CONSTRAINTS.drag_total')
+        
+        # HELIX_COUPLED to CONSTRAINTS
+        self.connect('HELIX_COUPLED.thrust_total',
+                     'CONSTRAINTS.thrust_total')
 
 class IsolatedProp(om.Group):
     def initialize(self):

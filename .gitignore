@@ -161,3 +161,10 @@ cython_debug/
 
 # forbidden files
 examples/analysis/data/*
+
+# Database files
+*.db
+*.out
+
+# Pictures
+*.png
