@@ -78,17 +78,17 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                chord=np.ones(spanwise_discretisation_propeller_BEM,
+                chord=np.ones(20,
                               order='F')*wing_chord,
-                twist=np.ones(spanwise_discretisation_propeller_BEM,
+                twist=np.ones(20,
                               order='F')*wing_twist,
                 empty_weight=0.,
                 CL0 = 0.283
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=30,
-                            spanwise_discretisation_propeller=11,
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
+                            spanwise_discretisation_propeller=31,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[PROWIM_prop_1, PROWIM_prop_2],
                             wing=PROWIM_wing,
