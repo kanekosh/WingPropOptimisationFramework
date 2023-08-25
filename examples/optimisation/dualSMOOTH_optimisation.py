@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
     # Adjustment to the PROWIM setup
-    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 9 # to make T=D
+    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 31 # to make T=D
     PROWIM_wingpropinfo.__post_init__()
 
     PROWIM_wingpropinfo.wing.chord *= 18 # to make T=D
