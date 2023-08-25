@@ -22,6 +22,9 @@ BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
     # Adjustment to the PROWIM setup
+    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 9 # to make T=D
+    PROWIM_wingpropinfo.__post_init__()
+
     PROWIM_wingpropinfo.wing.chord *= 18 # to make T=D
     PROWIM_wingpropinfo.wing.twist += 2 # to make T=D
     PROWIM_wingpropinfo.wing.vinf = 45 # to make T=D
@@ -76,8 +79,11 @@ if __name__ == '__main__':
                         'scaler': 1},
                     }
 
-    constraints = {'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CL':
-                        {'equals': 0.45},
+    constraints = {
+                    # 'PropellerSlipstreamWingModel.HELIX_COUPLED.thrust_total':
+                    #     {'equals': 15},
+                    'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CL':
+                        {'equals': 0.41210941},
                     'PropellerSlipstreamWingModel.CONSTRAINTS.thrust_equals_drag':
                         {'equals': 0.}
                     }
@@ -121,7 +127,7 @@ if __name__ == '__main__':
     "Minor feasibility tolerance": 1.0e-5,
     "Verify level": -1,
     "Function precision": 1.0e-6,
-    # "Major iterations limit": 50,
+    # "Major iterations limit": 20,
     "Nonderivative linesearch": None,
     "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print.out'),
     "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary.out')
@@ -136,7 +142,9 @@ if __name__ == '__main__':
     prob.driver.recording_options['includes'] = ["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.Cl",
                                                  "PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CDi",
                                                  'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.L',
-                                                 'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.D']
+                                                 'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.D',
+                                                 'PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.D',
+                                                 'PropellerSlipstreamWingModel.RETHORST.velocity_distribution']
     
     print('==========================================================')
     print('====================== Optimisation ======================')

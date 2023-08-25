@@ -78,9 +78,9 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                chord=np.ones(20,
+                chord=np.ones(11,
                               order='F')*wing_chord,
-                twist=np.ones(20,
+                twist=np.ones(11,
                               order='F')*wing_twist,
                 empty_weight=0.,
                 CL0 = 0.283

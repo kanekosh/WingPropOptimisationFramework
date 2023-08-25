@@ -62,7 +62,7 @@ def all_plots(db_name: str,
         print(f'No CL found: {e}')
     
     # === Plotting design variables ===
-    for dv_key in design_variables_orig.keys():
+    for index, dv_key in enumerate(design_variables_orig.keys()):
         variable_orig = design_variables_orig[dv_key]
         variable_opt = design_variables_opt[dv_key]
         
@@ -75,7 +75,7 @@ def all_plots(db_name: str,
             var_x = np.linspace(0, 1, len(variable_orig))
             optimisation_result_plot(design_variable_array=var_x, original=variable_orig, optimised=variable_opt,
                 label=var_name, xlabel=r'Propeller spanwise location $y$', ylabel=var_name,
-                savepath=os.path.join(savedir, f'Prop_{variable}'))
+                savepath=os.path.join(savedir, f'Prop_{variable}_{index}'))
         
         else:
             # Wing Plotting
@@ -151,7 +151,7 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
     plt.savefig(savepath)
 
 
-# if __name__=='__main__':
-#     all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db',
-#               wingpropinfo=PROWIM_wingpropinfo,
-#               savedir='.')
+if __name__=='__main__':
+    all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db',
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir='.')

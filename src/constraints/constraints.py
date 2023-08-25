@@ -43,6 +43,6 @@ class ConstraintsThrustDrag(om.ExplicitComponent):
         drag_total = inputs['drag_total']
         
         partials['thrust_equals_drag',
-                'drag_total'] = -1
+                'thrust_total'] = -1/drag_total
         partials['thrust_equals_drag',
-                'drag_total'] = 1/drag_total**2
+                'drag_total'] = thrust_total/drag_total**2
