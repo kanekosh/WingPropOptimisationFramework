@@ -21,6 +21,7 @@ class WingModel(om.Group):
         winginfo = wingpropinfo.wing
         
         # === Components ===
+        thickness_cp = winginfo.thickness
         twist_cp = winginfo.twist
         chord_cp = winginfo.chord
         
@@ -32,7 +33,7 @@ class WingModel(om.Group):
                         "symmetry": False,  # if true, model one half of wing reflected across the plane y = 0
                         "S_ref_type": "wetted",  # how we compute the wing area,        # can be 'wetted' or 'projected'
                         "fem_model_type": "tube",
-                        "thickness_cp": np.array([0.1, 0.2, 0.3]), # thickness of wing material?
+                        "thickness_cp": thickness_cp, # thickness of wing material?
                         "twist_cp": twist_cp,
                         "chord_cp": np.ones(len(chord_cp)), # np.ones(len(chord_cp)), #np.ones(len(chord_cp)), # chord_cp,#
                         "mesh": mesh,

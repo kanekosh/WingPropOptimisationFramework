@@ -8,8 +8,7 @@ import copy
 from src.base import WingPropInfo
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots
-from src.integration.master_model import WingSlipstreamPropOptimisation
-from src.integration.wingprop_optimisation import MainWingPropOptimisation
+from src.integration.coupled_groups_optimisation import WingSlipstreamPropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---

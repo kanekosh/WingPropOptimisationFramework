@@ -5,7 +5,8 @@ import json
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.integration.model_coupling import IsolatedProp
+from src.postprocessing.utils import get_niceColors
+from src.integration.coupled_groups_analysis import PropAnalysis
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
@@ -56,31 +57,13 @@ prop1 = PropInfo(label='Prop1',
                                        alpha_0=alpha_0[index],
                                        M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
-                 ref_point=np.array([0.0, 0.0174195, 0.0]),
+                 ref_point=np.array([0.0, 0.0, 0.0]), # 0.0174195
+                 rotation_axis=np.array([-1., 0., 0.]),
                  hub_orientation=np.array([[1.0, 0.0, 0.0],
                                            [0.0, 1.0*np.cos(np.deg2rad(-0.2)),
                                             1.0*np.sin(np.deg2rad(-0.2))],
-                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]])
-                 )
-
-prop2 = PropInfo(label='Prop1',
-                 prop_location=0.332,
-                 nr_blades=4,
-                 rot_rate=300.,
-                 chord=np.array(chord, order='F'),
-                 twist=np.array(twist, order='F'),
-                 span=np.array(span, order='F'),
-                 airfoils=[AirfoilInfo(label=f'Foil_{index}',
-                                       Cl_alpha=Cl_alpha[index],
-                                       alpha_L0=alpha_L0[index],
-                                       alpha_0=alpha_0[index],
-                                       M=M[index])
-                           for index in range(spanwise_discretisation_propeller_BEM+1)],
-                 ref_point=ref_point,
-                 hub_orientation=np.array([[1.0, 0.0, 0.0],
-                                           [0.0, 1.0*np.cos(np.deg2rad(-0.2)),
-                                            1.0*np.sin(np.deg2rad(-0.2))],
-                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]])
+                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]]),
+                 local_refinement=3
                  )
 
 parameters = ParamInfo(vinf=39.19,
@@ -93,6 +76,7 @@ parameters = ParamInfo(vinf=39.19,
 
 wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
+                thickness=np.ones(10)*0.001, # doesn't matter for this simulation
                 chord=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*wing_chord,
                 twist=np.ones(spanwise_discretisation_propeller_BEM,
@@ -103,13 +87,22 @@ wing = WingInfo(label='PROWIM_wing',
 
 
 wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=51,
+                            spanwise_discretisation_propeller=31,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
-                            propeller=[prop1, prop2],
+                            propeller=[prop1],
                             wing=wing,
                             parameters=parameters
                             )
 
+for index in range(len(PROWIM_wingpropinfo.propeller)):
+    PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
+    PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
+                                                            56.66413092, 54.56196904, 52.76508122, 50.14207845, 48.77576388, 45.81754819,
+                                                            44.61299923, 42.01886426, 40.93763764, 38.52984867, 37.65342321, 35.1964771,
+                                                            33.97829724, 30.47284116],
+                                                                order='F'
+                                                        )
+    
 
 class PropAnalysis(om.Group):
     def initialize(self):
@@ -117,11 +110,8 @@ class PropAnalysis(om.Group):
 
     def setup(self):
         self.add_subsystem('PropellerModel',
-                           subsys=IsolatedProp(WingPropInfo=PROWIM_wingpropinfo))
-
-    def configure(self):
-        # Empty because we do analysis
-        ...
+                           subsys=PropAnalysis(WingPropInfo=PROWIM_wingpropinfo)
+                           )
 
 
 if __name__ == '__main__':
@@ -179,8 +169,8 @@ if __name__ == '__main__':
     ax.scatter(J_experimental, CP_experimental,
                label=f'Experimental, CP', color='orange')
 
-    ax.set_xlabel("Advance Ratio (J)")
-    ax.set_ylabel(r"$C_T$, $C_P$")
+    ax.set_xlabel("Advance Ratio (J)", fontweight='ultralight')
+    ax.set_ylabel(r"$C_T$, $C_P$", fontweight='ultralight')
     ax.legend(fontsize='12')
 
     niceplots.adjust_spines(ax, outward=True)

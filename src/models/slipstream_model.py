@@ -22,7 +22,8 @@ class SlipStreamModel(om.Group):
                            subsys=RETHORST_velocityinterpolation(propeller_quantity=wingpropinfo.nr_props,
                                                                  propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
                                                                  propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
-                                                                 propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)]),
+                                                                 propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
+                                                                 propeller_local_refinement=wingpropinfo.propeller[0].local_refinement), # assuming homogeneous propeller blade refinement across propellers
                            promotes_outputs=['propeller_radii',
                                              'propeller_velocity'])
 

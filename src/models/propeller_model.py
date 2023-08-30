@@ -178,7 +178,7 @@ class PropellerModel(om.Group):
             rotor.span[iSpan].span = self.propellerinfo.span[iSpan]
             rotor.span[iSpan].sweep = 0.0
             rotor.span[iSpan].dihed = 0.0
-            rotor.span[iSpan].N_elem_span = 1 # local refinement of spanwise blade section
+            rotor.span[iSpan].N_elem_span = self.propellerinfo.local_refinement # local refinement of spanwise blade section
             rotor.span[iSpan].span_type = "uniform"
 
         # Append To Vehicle

@@ -2,7 +2,7 @@
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.integration.model_coupling import WingSlipstreamProp
+from src.integration.coupled_groups_analysis import WingSlipstreamProp
 
 # --- External ---
 import numpy as np

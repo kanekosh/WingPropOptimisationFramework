@@ -37,6 +37,7 @@ class WingInfo:
     span: float
     chord: np.array
     twist: np.array
+    thickness: np.array
     empty_weight: float
     load_factor: float = 1.
     empty_cg: np.array = np.zeros((3))
@@ -58,6 +59,8 @@ class PropInfo:
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])
     hub_orientation: np.array = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    
+    local_refinement: int = 2
 
     def __post_init__(self):
         assert len(self.chord) == len(self.span)+1, ' Chord should be defined for blade nodes, \
@@ -121,3 +124,7 @@ class WingPropInfo:
         for panel in range(self.spanwise_discretisation_nodes-1):
             self.vlm_mesh_control_points[panel] = 0.5 * \
                 (self.vlm_mesh[0, panel, 1]+self.vlm_mesh[0, panel+1, 1])
+        
+        # This velocity distribution will be used in case no propellers are configured
+        self.velocity_distribution_nopropeller = np.ones((self.spanwise_discretisation_nodes-1))*self.parameters.vinf
+        

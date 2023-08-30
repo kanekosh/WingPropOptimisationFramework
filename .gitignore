@@ -168,3 +168,5 @@ examples/analysis/data/*
 
 # Pictures
 *.png
+
+reports/

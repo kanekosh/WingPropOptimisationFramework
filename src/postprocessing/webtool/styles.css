@@ -1,0 +1,93 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+  }
+  
+  .header {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+  }
+  
+  .home-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .home-item {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #333;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .home-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: opacity(50%); /* Apply a grayscale filter to the background image */
+    z-index: -1;
+  }
+  
+  .home-item-1::before {
+    background-image: url('figures/propeller.png');
+    /* filter: grayscale(50%); Apply a grayscale filter */
+  }
+  
+  .home-item-2::before {
+    background-image: url('figures/wing.png');
+    /* filter: grayscale(50%); Apply a grayscale filter */
+  }
+  
+  .home-item-3::before {
+    background-image: url('figures/wingprop.png');
+    /* filter: opacity(50%); Apply a grayscale filter */
+  }
+  
+  .home-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    z-index: 1;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .home-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .home-item:hover .overlay {
+    opacity: 1;
+  }

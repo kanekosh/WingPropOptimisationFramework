@@ -7,7 +7,7 @@ import copy
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots
-from src.integration.master_model import PropOptimisation
+from src.integration.coupled_groups import PropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo, PROWIM_prop_1, PROWIM_parameters
 
 # --- External ---
@@ -19,12 +19,6 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__=='__main__':
-    db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
-    savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
-    all_plots(db_name=db_name,
-              wingpropinfo=PROWIM_wingpropinfo,
-              savedir=savepath)
-    
     PROWIM_wingpropinfo.propeller = [PROWIM_prop_1]
     
     objective = {

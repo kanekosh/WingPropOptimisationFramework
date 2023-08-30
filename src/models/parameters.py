@@ -19,6 +19,7 @@ class Parameters(om.IndepVarComp):
         # === Outputs ===
         # Freestream Parameters
         self.add_output("vinf", val=wingpropinfo.parameters.vinf, units="m/s")
+        self.add_output("velocity_distribution", val=wingpropinfo.velocity_distribution_nopropeller, units="m/s")
         self.add_output("alpha", val=wingpropinfo.parameters.wing_aoa, units="deg")
         self.add_output("Mach_number", val=wingpropinfo.parameters.mach_number)
         self.add_output(
