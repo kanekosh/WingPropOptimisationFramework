@@ -25,7 +25,7 @@ with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
 prop_radius = 0.1185
 ref_point = data['ref_point']
 span = data['span']
-twist = np.subtract(data['twist'], 1.2)
+twist = data['twist']
 chord = data['chord']
 
 alpha_0 = data['alpha_0']
@@ -40,17 +40,10 @@ wingspan = 0.73*2.*0.952
 spanwise_discretisation_propeller_BEM = len(span)
 
 
-parameters = ParamInfo(vinf=40.,
-                       wing_aoa=0.,
-                       mach_number=0.2,
-                       reynolds_number=640_000,
-                       speed_of_sound=333.4,
-                       air_density=1.2087)
-
 prop1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
                  nr_blades=4,
-                 rot_rate=(parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                 rot_rate=300.,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
@@ -66,7 +59,7 @@ prop1 = PropInfo(label='Prop1',
 prop2 = PropInfo(label='Prop1',
                  prop_location=0.332,
                  nr_blades=4,
-                 rot_rate=(parameters.vinf/(0.796*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                 rot_rate=300.,
                  chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
@@ -78,6 +71,13 @@ prop2 = PropInfo(label='Prop1',
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point
                  )
+
+parameters = ParamInfo(vinf=40.,
+                       wing_aoa=0.,
+                       mach_number=0.2,
+                       reynolds_number=640_000,
+                       speed_of_sound=333.4,
+                       air_density=1.2087)
 
 
 wing = WingInfo(label='PROWIM_wing',
@@ -102,7 +102,7 @@ wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
                             )
 
 
-class PROWIMValidation(om.Group):
+class PROWIMAnalysis(om.Group):
     def initialize(self):
         self.options.declare('WingPropInfo', default=WingPropInfo)
 
@@ -118,9 +118,9 @@ class PROWIMValidation(om.Group):
 if __name__ == '__main__':
     # === Generate numerical data ===
     CL_numerical = []
-    J = np.array([0.796, 1.0, float('nan')])
+    J = np.array([0.796, 0.8960, float('nan')])
     rot_rate = (wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
-    angles = np.arange(-8, 10+1, 1)
+    angles = np.arange(-8, 11, 1)
     
     prob = om.Problem()
 
@@ -136,7 +136,12 @@ if __name__ == '__main__':
         elif J[index_rotational]==0.796:
             wingpropinfo.NO_CORRECTION=False
             wingpropinfo.NO_PROPELLER=False
-            wingpropinfo.wing.CL0 = 0.3227
+            wingpropinfo.wing.CL0 = 0.3079
+            
+        elif J[index_rotational]==0.8960:
+            wingpropinfo.NO_CORRECTION=False
+            wingpropinfo.NO_PROPELLER=False
+            wingpropinfo.wing.CL0 = 0.2938
             
         else:
             wingpropinfo.NO_CORRECTION=False
@@ -147,7 +152,7 @@ if __name__ == '__main__':
             print(f'Angle of attack: {angle: ^10}')
             wingpropinfo.parameters.wing_aoa = angle
             
-            prob.model = PROWIMValidation(WingPropInfo=wingpropinfo)
+            prob.model = PROWIMAnalysis(WingPropInfo=wingpropinfo)
             prob.setup()
             prob.run_model()
 
@@ -169,7 +174,7 @@ if __name__ == '__main__':
     J_inf = validation_data['J'][index1+1]
     
     # Validation data for J=1
-    n=1
+    n=2
     index1 = n*19
     index2 = (n+1)*19
     aoa = validation_data['AoA'][index1:index2]
@@ -178,7 +183,7 @@ if __name__ == '__main__':
     J_1 = validation_data['J'][index1+1]
     
     # Validation data for J=0.796
-    n=4
+    n=3
     index1 = n*19
     index2 = (n+1)*19
     aoa = validation_data['AoA'][index1:index2]
@@ -190,17 +195,17 @@ if __name__ == '__main__':
     plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(figsize=(10, 7))
     
-    ax.plot(angles, CL_numerical[0], label='Numerical, J=0.796', color='b')
-    ax.plot(angles, CL_numerical[1], label=f'Numerical, J=1.0', color='orange')
-    ax.plot(angles, CL_numerical[2], label=f'Numerical, J=inf', color='grey')
+    ax.plot(angles, CL_numerical[0], label=r'Numerical, $J=0.796$', color='b')
+    ax.plot(angles, CL_numerical[1], label=r'Numerical, $J=0.896$', color='orange')
+    ax.plot(angles, CL_numerical[2], label=r'Numerical, $J=\infty$', color='grey')
 
-    ax.scatter(aoa, CL_J0796, label=f'Experimental, J=0.7962', color='b')
-    ax.scatter(aoa, CL_J1, label=f'Experimental, J=1.0', color='orange')
-    ax.scatter(aoa, CL_Jinf, label=f'Experimental, J=inf', color='grey')
+    ax.scatter(aoa, CL_J0796, label=r'Experimental, $J=0.796$', color='b')
+    ax.scatter(aoa, CL_J1, label=r'Experimental, $J=0.896$', color='orange')
+    ax.scatter(aoa, CL_Jinf, label=r'Experimental, $J=\infty$', color='grey')
     
     
-    ax.set_xlabel("Angle of Attack (deg)")
-    ax.set_ylabel(r"Lift Coefficient ($C_L$)")
+    ax.set_xlabel("Angle of Attack (deg)", fontweight='light')
+    ax.set_ylabel(r"Lift Coefficient ($C_L$)", fontweight='light')
     ax.legend(fontsize='12')
 
     niceplots.adjust_spines(ax, outward=True)

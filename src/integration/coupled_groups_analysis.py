@@ -24,19 +24,17 @@ class WingSlipstreamPropAnalysis(om.Group):
         wingpropinfo = self.options["WingPropInfo"]
 
         # === Components ===
-            # Inputs
         self.add_subsystem('PARAMETERS', subsys=Parameters(
             WingPropInfo=wingpropinfo))
 
         self.add_subsystem('DESIGNVARIABLES', subsys=DesignVariables(
             WingPropInfo=wingpropinfo))
 
-            # Modules
         for propeller_nr in range(wingpropinfo.nr_props):
             self.add_subsystem(f'HELIX_{propeller_nr}',
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
                                                      PropInfo=wingpropinfo.propeller[propeller_nr]))
-        
+
         self.add_subsystem('RETHORST',
                            subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
 
@@ -46,10 +44,6 @@ class WingSlipstreamPropAnalysis(om.Group):
         self.add_subsystem('HELIX_COUPLED', 
                            subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
 
-            # Outputs
-        self.add_subsystem('CONSTRAINTS', 
-                           subsys=ConstraintsThrustDrag())
-        
         # === Explicit connections ===
         # PARAMS to HELIX
         for index, _ in enumerate(wingpropinfo.propeller):
@@ -103,26 +97,16 @@ class WingSlipstreamPropAnalysis(om.Group):
                          f"HELIX_{index}.om_helix.geodef_parametric_0_rot_rate")
 
         # DVs to OPENAEROSTRUCT
-        self.connect('DESIGNVARIABLES.twist',
-                     'OPENAEROSTRUCT.wing.twist_cp')
-        self.connect('DESIGNVARIABLES.chord',
-                     'OPENAEROSTRUCT.wing.geometry.chord_cp')
+        # Be careful with connecting variabes such as chord_cp/twist_cp, these are coefficients, not the actual twist
         self.connect('DESIGNVARIABLES.span',
                      'OPENAEROSTRUCT.wing.geometry.span')
 
         # HELIX to RETHORST
-        for index in range(wingpropinfo.nr_props):
+        for index, _ in enumerate(wingpropinfo.propeller):
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
                         f"RETHORST.interpolation.propeller_radii_BEM_rotor{index}")
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_velocity_distribution",
                         f"RETHORST.interpolation.propeller_velocity_BEM_rotor{index}")
-            
-        # HELIX to HELIX_COUPLED
-        for index in range(wingpropinfo.nr_props):
-            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_thrust",
-                        f"HELIX_COUPLED.thrust_prop_{index}")
-            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_power",
-                        f"HELIX_COUPLED.power_prop_{index}")
 
         # RETHORST to OPENAEROSTRUCT
         self.connect("RETHORST.velocity_distribution",
@@ -130,13 +114,11 @@ class WingSlipstreamPropAnalysis(om.Group):
         self.connect("RETHORST.correction_matrix",
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.rethorst_correction")
         
-        # OPENAEROSTRUCT to CONSTRAINTS
-        self.connect('OPENAEROSTRUCT.AS_point_0.total_perf.D',
-                     'CONSTRAINTS.drag_total')
-        
-        # HELIX_COUPLED to CONSTRAINTS
-        self.connect('HELIX_COUPLED.thrust_total',
-                     'CONSTRAINTS.thrust_total')
+        for index, _ in enumerate(wingpropinfo.propeller):
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_thrust",
+                        f"HELIX_COUPLED.thrust_prop_{index}")
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_power",
+                        f"HELIX_COUPLED.power_prop_{index}")      
 
 
 class WingAnalysis(om.Group):

@@ -33,9 +33,9 @@ class WingModel(om.Group):
                         "symmetry": False,  # if true, model one half of wing reflected across the plane y = 0
                         "S_ref_type": "wetted",  # how we compute the wing area,        # can be 'wetted' or 'projected'
                         "fem_model_type": "tube",
-                        "thickness_cp": thickness_cp, # thickness of wing material?
+                        "thickness_cp": thickness_cp, # thickness of material
                         "twist_cp": twist_cp,
-                        "chord_cp": np.ones(len(chord_cp)), # np.ones(len(chord_cp)), #np.ones(len(chord_cp)), # chord_cp,#
+                        "chord_cp": np.ones(len(chord_cp)),
                         "mesh": mesh,
                         "span": winginfo.span,
                         "CL0": winginfo.CL0,  # CL of the surface at alpha=0
