@@ -5,9 +5,7 @@ import json
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.postprocessing.utils import get_niceColors
 from src.integration.coupled_groups_analysis import PropAnalysis
-from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
 import numpy as np
@@ -49,6 +47,26 @@ prop1 = PropInfo(label='Prop1',
                  nr_blades=4,
                  rot_rate=300.,
                  chord=np.array(chord, order='F'),
+                 twist=np.array(twist, order='F')-1.2,
+                 span=np.array(span, order='F'),
+                 airfoils=[AirfoilInfo(label=f'Foil_{index}',
+                                       Cl_alpha=Cl_alpha[index],
+                                       alpha_L0=alpha_L0[index],
+                                       alpha_0=alpha_0[index],
+                                       M=M[index])
+                           for index in range(spanwise_discretisation_propeller_BEM+1)],
+                 ref_point=np.array(ref_point),
+                 hub_orientation=np.array([[1.0, 0.0, 0.0],
+                                           [0.0, 1.0*np.cos(np.deg2rad(-0.2)),
+                                            1.0*np.sin(np.deg2rad(-0.2))],
+                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]])
+                 )
+
+prop2 = PropInfo(label='Prop1',
+                 prop_location=0.332,
+                 nr_blades=4,
+                 rot_rate=300.,
+                 chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
@@ -57,13 +75,11 @@ prop1 = PropInfo(label='Prop1',
                                        alpha_0=alpha_0[index],
                                        M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
-                 ref_point=np.array([0.0, 0.0, 0.0]), # 0.0174195
-                 rotation_axis=np.array([-1., 0., 0.]),
+                 ref_point=ref_point,
                  hub_orientation=np.array([[1.0, 0.0, 0.0],
                                            [0.0, 1.0*np.cos(np.deg2rad(-0.2)),
                                             1.0*np.sin(np.deg2rad(-0.2))],
-                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]]),
-                 local_refinement=3
+                                           [0.0, -1.0*np.sin(np.deg2rad(-0.2)), 1.0*np.cos(np.deg2rad(-0.2))]])
                  )
 
 parameters = ParamInfo(vinf=39.19,
@@ -76,42 +92,37 @@ parameters = ParamInfo(vinf=39.19,
 
 wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                thickness=np.ones(10)*0.001, # doesn't matter for this simulation
                 chord=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*wing_chord,
                 twist=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*wing_twist,
+                thickness=np.ones(spanwise_discretisation_propeller_BEM,
+                              order='F')*0.001,
                 empty_weight=0.,
                 CL0=0.283
                 )
 
 
 wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=31,
+                            spanwise_discretisation_propeller=51,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
-                            propeller=[prop1],
+                            propeller=[prop1, prop2],
                             wing=wing,
                             parameters=parameters
                             )
 
-for index in range(len(PROWIM_wingpropinfo.propeller)):
-    PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
-    PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
-                                                            56.66413092, 54.56196904, 52.76508122, 50.14207845, 48.77576388, 45.81754819,
-                                                            44.61299923, 42.01886426, 40.93763764, 38.52984867, 37.65342321, 35.1964771,
-                                                            33.97829724, 30.47284116],
-                                                                order='F'
-                                                        )
-    
 
-class PropAnalysis(om.Group):
+class PROWIMAnalysis(om.Group):
     def initialize(self):
         self.options.declare('WingPropInfo', default=WingPropInfo)
 
     def setup(self):
         self.add_subsystem('PropellerModel',
-                           subsys=PropAnalysis(WingPropInfo=PROWIM_wingpropinfo)
-                           )
+                           subsys=PropAnalysis(WingPropInfo=wingpropinfo))
+
+    def configure(self):
+        # Empty because we do analysis
+        ...
 
 
 if __name__ == '__main__':
@@ -123,10 +134,10 @@ if __name__ == '__main__':
                                 'CP=P/rho*n3*D5', 'eta=J*CT/CP'],
                        sep=',')
 
-    J_experimental = file['J=Vinf/nD']
-    CT_experimental = file['CT=T/rho*n2*D4']
-    CP_experimental = file['CP=P/rho*n3*D5']
-    eta_experimental = file['eta=J*CT/CP']
+    J_experimental = file['J=Vinf/nD'][:36]
+    CT_experimental = file['CT=T/rho*n2*D4'][:36]
+    CP_experimental = file['CP=P/rho*n3*D5'][:36]
+    eta_experimental = file['eta=J*CT/CP'][:36]
 
     # === Generate numerical data ===
     J_min = np.min(J_experimental)
@@ -143,7 +154,7 @@ if __name__ == '__main__':
         for index_prop in range(wingpropinfo.nr_props):
             wingpropinfo.propeller[index_prop].rot_rate = irot_rate
 
-        prob.model = PropAnalysis(WingPropInfo=wingpropinfo)
+        prob.model = PROWIMAnalysis(WingPropInfo=wingpropinfo)
         prob.setup()
         prob.run_model()
 
@@ -161,15 +172,15 @@ if __name__ == '__main__':
     plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(figsize=(10, 7))
 
-    ax.plot(J_numerical, CT_numerical, label='Numerical, CT', color='b')
-    ax.plot(J_numerical, CP_numerical, label=f'Numerical, CP', color='orange')
+    ax.plot(J_numerical, CT_numerical, label=r'Numerical, $C_T$', color='b')
+    ax.plot(J_numerical, CP_numerical, label=r'Numerical, $C_P$', color='orange')
 
     ax.scatter(J_experimental, CT_experimental,
-               label=f'Experimental, CT', color='b')
+               label=r'Experimental, $C_T$', color='b')
     ax.scatter(J_experimental, CP_experimental,
-               label=f'Experimental, CP', color='orange')
+               label=r'Experimental, $C_P$', color='orange')
 
-    ax.set_xlabel("Advance Ratio (J)", fontweight='ultralight')
+    ax.set_xlabel(r"Advance Ratio ($J$)", fontweight='ultralight')
     ax.set_ylabel(r"$C_T$, $C_P$", fontweight='ultralight')
     ax.legend(fontsize='12')
 

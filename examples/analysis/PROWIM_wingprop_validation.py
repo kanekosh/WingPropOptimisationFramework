@@ -5,7 +5,7 @@ import json
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.integration.coupled_groups_analysis import WingSlipstreamPropOptimisation
+from src.integration.coupled_groups_analysis import WingSlipstreamPropAnalysis
 
 # --- External ---
 import numpy as np
@@ -25,7 +25,7 @@ with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
 prop_radius = 0.1185
 ref_point = data['ref_point']
 span = data['span']
-twist = data['twist']
+twist = np.subtract(data['twist'], 1.2)
 chord = data['chord']
 
 alpha_0 = data['alpha_0']
@@ -86,6 +86,8 @@ wing = WingInfo(label='PROWIM_wing',
                               order='F')*wing_chord,
                 twist=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*wing_twist,
+                thickness=np.ones(spanwise_discretisation_propeller_BEM,
+                              order='F')*0.001,
                 empty_weight=0.,
                 CL0 = 0.283
                 )
@@ -100,13 +102,13 @@ wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
                             )
 
 
-class WingSlipstreamPropAnalysis(om.Group):
+class PROWIMValidation(om.Group):
     def initialize(self):
         self.options.declare('WingPropInfo', default=WingPropInfo)
 
     def setup(self):
         self.add_subsystem('PropellerSlipstreamWingModel',
-                           subsys=WingSlipstreamProp(WingPropInfo=wingpropinfo))
+                           subsys=WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo))
 
     def configure(self):
         # Empty because we do analysis
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     CL_numerical = []
     J = np.array([0.796, 1.0, float('nan')])
     rot_rate = (wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
-    angles = np.arange(-8, 10, 1)
+    angles = np.arange(-8, 10+1, 1)
     
     prob = om.Problem()
 
@@ -145,7 +147,7 @@ if __name__ == '__main__':
             print(f'Angle of attack: {angle: ^10}')
             wingpropinfo.parameters.wing_aoa = angle
             
-            prob.model = WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo)
+            prob.model = PROWIMValidation(WingPropInfo=wingpropinfo)
             prob.setup()
             prob.run_model()
 
