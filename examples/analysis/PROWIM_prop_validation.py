@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import json
+import logging
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
@@ -14,6 +15,8 @@ import openmdao.api as om
 import matplotlib.pyplot as plt
 import niceplots
 
+
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 BASE_DIR = Path(__file__).parents[0]
 
@@ -46,8 +49,8 @@ prop1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
                  nr_blades=4,
                  rot_rate=300.,
-                 chord=np.array(chord, order='F'),
-                 twist=np.array(twist, order='F')-1.2,
+                 chord=np.array(chord, order='F')*prop_radius,
+                 twist=np.array(twist, order='F'),
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
                                        Cl_alpha=Cl_alpha[index],

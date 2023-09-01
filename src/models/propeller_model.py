@@ -87,6 +87,7 @@ class PropellerModel(om.Group):
         simparam.basename = "PropModel"
 
         simparam.nt = TIME_STEPS_HELIX
+        simparam.dt = 1.0
         simparam.t_start = 0.0
         simparam.t_end = 0.1
 

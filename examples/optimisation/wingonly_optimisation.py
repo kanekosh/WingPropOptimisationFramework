@@ -19,7 +19,13 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    PROWIM_wingpropinfo.wing.twist = np.ones(13)*2
+    db_name = os.path.join(BASE_DIR, 'results', 'data_wing.db')
+    savepath = os.path.join(BASE_DIR, 'results', 'wing_results')
+    all_plots(db_name=db_name,
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir=savepath)
+    
+    PROWIM_wingpropinfo.wing.twist = np.ones(11)*2
     
     objective = {
                 'OPENAEROSTRUCT.AS_point_0.wing_perf.CDi':

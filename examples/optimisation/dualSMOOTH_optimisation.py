@@ -62,12 +62,12 @@ if __name__ == '__main__':
                         'scaler': 1./10},
                     # 'DESIGNVARIABLES.rotor_0_chord':
                     #     {'lb': 0,
-                    #     'ub': 90,
-                    #     'scaler': 1./10},
+                    #     'ub': 0.2,
+                    #     'scaler': 1./0.012032137566147693},
                     # 'DESIGNVARIABLES.rotor_1_chord':
                     #     {'lb': 0,
-                    #     'ub': 90,
-                    #     'scaler': 1./10},
+                    #     'ub': .2,
+                    #     'scaler': 1./0.012032137566147693},
                     'DESIGNVARIABLES.twist':
                         {'lb': -5,
                         'ub': 5,
@@ -102,19 +102,21 @@ if __name__ == '__main__':
                                                 objective=objective,
                                                 constraints=constraints,
                                                 design_vars=design_vars)
-    model = prob.model
+
     # === Analysis ===
     prob.setup()
     prob.run_model()
-    
+        
         # Check derivatives  
     if False:
-        prob.check_totals(  compact_print=True, show_only_incorrect=True,
-                        form='central', step=1e-8, 
-                        rel_err_tol=1e-3, abs_err_tol=1e-4)
-        partials = prob.check_partials(compact_print=True, show_only_incorrect=True, 
-                                    includes=['*RETHORST*'], 
-                                    form='central', step=1e-8)
+        # prob.check_totals(  compact_print=True, show_only_incorrect=True,
+        #                 form='central', step=1e-8, 
+        #                 rel_err_tol=1e-3, abs_err_tol=1e-4)
+        # prob.check_partials(compact_print=True, show_only_incorrect=True, 
+        #                             includes=['*blade_chord_spline_0*'], 
+        #                             form='central', step=1e-8)
+        
+        quit()
 
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")

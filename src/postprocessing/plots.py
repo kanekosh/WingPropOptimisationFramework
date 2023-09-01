@@ -52,7 +52,7 @@ def all_plots(db_name: str,
                 # === Plotting misc variables ===
                 var_x = np.linspace(0, 1, len(veldistr_orig))
                 optimisation_result_plot(design_variable_array=var_x, original=veldistr_orig, optimised=veldistr_opt,
-                                         label=r"$V$", xlabel=r'Prop blade location', ylabel=r"$V$",
+                                         label=r"$V$", xlabel=r'Normalised propeller blade', ylabel=r"Velocity, $m/s$",
                                          savepath=os.path.join(savedir, f'vel_distr_prop'))
 
             elif 'AS_point_0.wing_perf.Cl' in misckey:
@@ -64,7 +64,7 @@ def all_plots(db_name: str,
                 optimisation_result_plot(design_variable_array=spanwise_mesh,
                                          original=veldistr_orig,
                                          optimised=veldistr_opt,
-                                         label=r"$C_L$", xlabel=r'Wing spanwise location', ylabel=r"$C_L$",
+                                         label=r"$C_L$", xlabel=r'Wing spanwise location', ylabel=r"Lift coefficient, $C_L$",
                                          savepath=os.path.join(savedir, f'CL_Wing'))
 
             elif 'wing.geometry.twist' in misckey:
@@ -72,10 +72,20 @@ def all_plots(db_name: str,
                 twist_opt = last_case.outputs[misckey][0]
 
                 # === Plotting misc variables ===
-                var_x = wingpropinfo.vlm_mesh_control_points
+                var_x = wingpropinfo.vlm_mesh[0, :, 1]
                 optimisation_result_plot(design_variable_array=var_x, original=twist_orig, optimised=twist_opt,
-                                         label=r"$Twist$", xlabel=r'Wing spanwise location', ylabel=r"$Twist$",
+                                         label=r"$Twist, deg$", xlabel=r'Wing spanwise location', ylabel=r"$Twist, deg$",
                                          savepath=os.path.join(savedir, f'Wing_twist_DV'))
+                
+            elif 'blade_chord_spline_0.y' in misckey:
+                twist_orig = first_case.outputs[misckey]
+                twist_opt = last_case.outputs[misckey]
+
+                # === Plotting misc variables ===
+                var_x = np.linspace(0, 1, len(twist_orig))
+                optimisation_result_plot(design_variable_array=var_x, original=twist_orig, optimised=twist_opt,
+                                         label=r"$Propeller, deg$", xlabel=r'Normalised propeller blade', ylabel=r"$Twist, deg$",
+                                         savepath=os.path.join(savedir, f'Prop_twist_DV'))
 
     except Exception as e:
         print(f'No CL found: {e}')
@@ -92,9 +102,12 @@ def all_plots(db_name: str,
             if 'rotor' in var_name or 'geodef_parametric' in var_name:
                 # Propeller Plotting
                 variable = var_name[8:]
+                variable = variable.split('_')[-1]
+                variable = variable.capitalize()
+                variable_label = r'Twist, $deg$'
                 var_x = np.linspace(0, 1, len(variable_orig))
                 optimisation_result_plot(design_variable_array=var_x, original=variable_orig, optimised=variable_opt,
-                                         label=var_name, xlabel=r'Propeller spanwise location $y$', ylabel=var_name,
+                                         label=variable, xlabel=r'Propeller spanwise location $y$', ylabel=variable_label,
                                          savepath=os.path.join(savedir, f'Prop_{variable}_{index}'))
 
             else:
@@ -217,7 +230,7 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
     ax.set_ylabel(ylabel, fontweight='ultralight')
 
     ax.set_ylim((
-        min(min(original), min(optimised))*margin,
+        min(min(original), min(optimised))*1/margin,
         max(max(original), max(optimised))*margin)
     )
     ax.set_xlim((
@@ -241,8 +254,8 @@ def optimisation_singlevalue_results(design_variable_array: np.array,
     for key in kwargs.keys():
         ax.plot(spanwise, kwargs[key])
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel, fontweight='ultralight')
+    ax.set_ylabel(ylabel, fontweight='ultralight')
     niceplots.adjust_spines(ax, outward=True)
 
     plt.savefig(savepath)
