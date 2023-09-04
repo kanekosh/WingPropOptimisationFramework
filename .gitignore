@@ -170,3 +170,5 @@ examples/analysis/data/*
 *.png
 
 reports/
+
+.DS_store

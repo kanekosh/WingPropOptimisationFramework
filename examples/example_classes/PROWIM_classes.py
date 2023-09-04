@@ -33,11 +33,13 @@ wing_twist = 0.
 wing_chord = 0.24
 wingspan = 0.73*2.*0.952
 
+prop_refinement = 4
+
 spanwise_discretisation_propeller_BEM = len(span)
 
 
 PROWIM_parameters = ParamInfo(vinf=40.,
-                       wing_aoa=2.,
+                       wing_aoa=2., # TODO: this is a wing property
                        mach_number=0.2,
                        reynolds_number=640_000,
                        speed_of_sound=333.4,
@@ -57,7 +59,7 @@ PROWIM_prop_1 = PropInfo(label='Prop1',
                                         M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
-                 local_refinement=3
+                 local_refinement=prop_refinement
                  )
 
 PROWIM_prop_2 = PropInfo(label='Prop1',
@@ -74,18 +76,18 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                                         M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
-                 local_refinement=3
+                 local_refinement=prop_refinement
                  )
 
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                thickness = np.ones(1)*0.01,
+                thickness = np.ones(9)*0.001,
                 chord=np.ones(9,
                               order='F')*wing_chord,
                 twist=np.ones(9,
                               order='F')*wing_twist,
-                empty_weight=0.,
+                empty_weight=10.,
                 CL0 = 0.283
                 )
 

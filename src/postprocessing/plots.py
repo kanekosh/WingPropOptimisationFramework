@@ -19,6 +19,8 @@ from scipy.interpolate import interp1d
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 
+# TODO: write specific propeller, wing and prop-wing plotting functions, it's very messy right now
+
 def all_plots(db_name: str,
               wingpropinfo: WingPropInfo,
               savedir: str,
@@ -56,16 +58,25 @@ def all_plots(db_name: str,
                                          savepath=os.path.join(savedir, f'vel_distr_prop'))
 
             elif 'AS_point_0.wing_perf.Cl' in misckey:
-                veldistr_orig = first_case.outputs[misckey]
-                veldistr_opt = last_case.outputs[misckey]
+                Cl_wing_orig = first_case.outputs[misckey]
+                Cl_wing_opt = last_case.outputs[misckey]
+                
+                chord_orig = first_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+                chord_opt = last_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+                
+                chord_nodes_orig = np.zeros(len(Cl_wing_opt))
+                chord_nodes_orig = [(chord_orig[index]+chord_orig[index+1])/2 for index in range(len(chord_orig)-1)]
+                
+                chord_nodes_opt = np.zeros(len(Cl_wing_opt))
+                chord_nodes_opt = [(chord_opt[index]+chord_opt[index+1])/2 for index in range(len(chord_opt)-1)]
 
                 # === Plotting misc variables ===
-                var_x = np.linspace(-span/2, span/2, len(veldistr_orig))
+                var_x = np.linspace(-span/2, span/2, len(Cl_wing_orig))
                 optimisation_result_plot(design_variable_array=spanwise_mesh,
-                                         original=veldistr_orig,
-                                         optimised=veldistr_opt,
-                                         label=r"$C_L$", xlabel=r'Wing spanwise location', ylabel=r"Lift coefficient, $C_L$",
-                                         savepath=os.path.join(savedir, f'CL_Wing'))
+                                         original=Cl_wing_orig*chord_nodes_orig,
+                                         optimised=Cl_wing_opt*chord_nodes_opt,
+                                         label=r"$C_l \cdot c$", xlabel=r'Wing spanwise location', ylabel=r"Lift coefficient, $C_l \cdot c$",
+                                         savepath=os.path.join(savedir, f'Clc_Wing'))
 
             elif 'wing.geometry.twist' in misckey:
                 twist_orig = first_case.outputs[misckey][0]
@@ -108,7 +119,7 @@ def all_plots(db_name: str,
                 var_x = np.linspace(0, 1, len(variable_orig))
                 optimisation_result_plot(design_variable_array=var_x, original=variable_orig, optimised=variable_opt,
                                          label=variable, xlabel=r'Propeller spanwise location $y$', ylabel=variable_label,
-                                         savepath=os.path.join(savedir, f'Prop_{variable}_{index}'))
+                                         savepath=os.path.join(savedir, f'Prop_{variable}_{index}'.lower()))
 
             else:
                 # Wing Plotting
@@ -117,7 +128,7 @@ def all_plots(db_name: str,
                                          original=variable_orig,
                                          optimised=variable_opt,
                                          label=var_name, xlabel=r'Wing spanwise location', ylabel=var_name,
-                                         savepath=os.path.join(savedir, f'Wing_{var_name}'))
+                                         savepath=os.path.join(savedir, f'Wing_{var_name}'.lower()))
 
     # === Plotting objectives ===
     for dv_key in objective_orig.keys():
@@ -214,9 +225,9 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
 
     spanwise = design_variable_array
     ax.plot(spanwise, original,
-            label=f'{label}, original', color=colors['Orange'])
+            label=f'{label}, original', color='Orange')
     ax.plot(spanwise, optimised,
-            label=f'{label}, optimised', color=colors['Cyan'], linestyle='dashed')
+            label=f'{label}, optimised', color='b', linestyle='dashed')
 
     # ax.plot([0.332-0.12, 0.332-0.12], [0., 0.25], color=delftcolors['Grey'], linewidth=0.5)
     # ax.plot([0.332+0.12, 0.332+0.12], [0., 0.25], color=delftcolors['Grey'], linewidth=0.5)
@@ -229,10 +240,10 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
     ax.set_xlabel(xlabel, fontweight='ultralight')
     ax.set_ylabel(ylabel, fontweight='ultralight')
 
-    ax.set_ylim((
-        min(min(original), min(optimised))*1/margin,
-        max(max(original), max(optimised))*margin)
-    )
+    # ax.set_ylim((
+    #     min(min(original), min(optimised))*1/margin,
+    #     max(max(original), max(optimised))*margin)
+    # )
     ax.set_xlim((
         min(spanwise)*margin,
         max(spanwise)*margin)
@@ -261,9 +272,9 @@ def optimisation_singlevalue_results(design_variable_array: np.array,
     plt.savefig(savepath)
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # scatter_plots(savedir='.',
     #     db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db')
-    all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db',
-              wingpropinfo=PROWIM_wingpropinfo,
-              savedir='.')
+#     all_plots(db_name='/home/mdolabuser/mount/code/framework/WingPropOptimisationFramework/examples/optimisation/results/data.db',
+#               wingpropinfo=PROWIM_wingpropinfo,
+#               savedir='.')

@@ -42,6 +42,7 @@ class WingInfo:
     load_factor: float = 1.
     empty_cg: np.array = np.zeros((3))
     CL0: float = 0.
+    fuel_mass: float = 0. # we fly eletric
 
 
 @dataclass

@@ -19,29 +19,43 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    db_name = os.path.join(BASE_DIR, 'results', 'data_wing.db')
-    savepath = os.path.join(BASE_DIR, 'results', 'wing_results')
-    all_plots(db_name=db_name,
-              wingpropinfo=PROWIM_wingpropinfo,
-              savedir=savepath)
     
-    PROWIM_wingpropinfo.wing.twist = np.ones(11)*2
+    # db_name = os.path.join(BASE_DIR, 'results', 'data_wing.db')
+    # savepath = os.path.join(BASE_DIR, 'results', 'wing_results')
+    # all_plots(db_name=db_name,
+    #           wingpropinfo=PROWIM_wingpropinfo,
+    #           savedir=savepath)
+    
+    # quit()
+    PROWIM_wingpropinfo.wing.empty_weight = 3.6125
     
     objective = {
-                'OPENAEROSTRUCT.AS_point_0.wing_perf.CDi':
-                    {'scaler': 1/0.00217305}
+                'OPENAEROSTRUCT.AS_point_0.total_perf.CD':
+                    {'scaler': 1/0.04123006}
                 }
 
     design_vars = {
                     'DESIGNVARIABLES.twist':
-                        {'lb': -5,
-                        'ub': 5,
+                        {'lb': -10,
+                        'ub': 10,
                         'scaler': 1},
+                    'DESIGNVARIABLES.chord':
+                        {'lb': 1e-5,
+                        'ub': 2,
+                        'scaler': 10},
+                    'OPENAEROSTRUCT.wing.thickness_cp':
+                        {'lb': 1e-5,
+                        'ub': 5e-1,
+                        'scaler': 1e3},
                     }
 
     constraints = {
-                    'OPENAEROSTRUCT.AS_point_0.wing_perf.CL':
-                        {'equals': 0.66805657},
+                    'OPENAEROSTRUCT.AS_point_0.L_equals_W':
+                        {'equals': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
+                        {'upper': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
+                        {'upper': 0.},
                     }
     
     prob = om.Problem()
@@ -50,15 +64,17 @@ if __name__ == '__main__':
                                     constraints=constraints,
                                     design_vars=design_vars)
     
+    # === Analysis ===
     prob.setup()
     prob.run_model()
     
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
-    
+
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
+    prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
     "Major feasibility tolerance": 1.0e-8,
     "Major optimality tolerance": 1.0e-8,
@@ -79,6 +95,7 @@ if __name__ == '__main__':
     prob.driver.add_recorder(recorder)
     prob.driver.recording_options['includes'] = [
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
+                                                    "OPENAEROSTRUCT.wing.geometry.chord",
                                                     "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl"
                                                  ]
     

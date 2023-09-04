@@ -33,6 +33,7 @@ class Parameters(om.IndepVarComp):
                         val=wingpropinfo.parameters.speed_of_sound, units="m/s")
         self.add_output("load_factor", val=wingpropinfo.wing.load_factor)
         self.add_output("empty_cg", val=wingpropinfo.wing.empty_cg, units="m")
+        self.add_output("fuel_mass", val=wingpropinfo.wing.fuel_mass, units="kg")
         
         # Propeller Parameters
         for index, _ in enumerate(wingpropinfo.propeller):

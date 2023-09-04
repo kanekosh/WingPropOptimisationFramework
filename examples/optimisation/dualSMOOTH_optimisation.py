@@ -21,21 +21,29 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
+    
+    db_name = os.path.join(BASE_DIR, 'results', 'data.db')
+    # === Plotting ===
+    savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
+    all_plots(db_name=db_name,
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir=savepath)
+    quit()
     # Adjustment to the PROWIM setup
     PROWIM_wingpropinfo.spanwise_discretisation_propeller = 25 # to make T=D
     PROWIM_wingpropinfo.__post_init__()
 
-    PROWIM_wingpropinfo.wing.chord *= 18 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 13 # to make T=D
+    PROWIM_wingpropinfo.wing.chord *= 3 # to make T=D
     PROWIM_wingpropinfo.wing.twist += 2 # to make T=D
-    PROWIM_wingpropinfo.wing.vinf = 40 # to make T=D
-    for index in range(len(PROWIM_wingpropinfo.propeller)):
-        PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
-        PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
-                                                                56.66413092, 54.56196904, 52.76508122, 50.14207845, 48.77576388, 45.81754819,
-                                                                44.61299923, 42.01886426, 40.93763764, 38.52984867, 37.65342321, 35.1964771,
-                                                                33.97829724, 30.47284116],
-                                                                    order='F'
-                                                            )
+    # for index in range(len(PROWIM_wingpropinfo.propeller)):
+    #     PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
+    #     PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
+    #                                                             56.66413092, 54.56196904, 52.76508122, 50.14207845, 48.77576388, 45.81754819,
+    #                                                             44.61299923, 42.01886426, 40.93763764, 38.52984867, 37.65342321, 35.1964771,
+    #                                                             33.97829724, 30.47284116],
+    #                                                                 order='F'
+    #                                                         )
     
     
     objective = {
@@ -60,20 +68,16 @@ if __name__ == '__main__':
                         {'lb': 0,
                         'ub': 90,
                         'scaler': 1./10},
-                    # 'DESIGNVARIABLES.rotor_0_chord':
-                    #     {'lb': 0,
-                    #     'ub': 0.2,
-                    #     'scaler': 1./0.012032137566147693},
-                    # 'DESIGNVARIABLES.rotor_1_chord':
-                    #     {'lb': 0,
-                    #     'ub': .2,
-                    #     'scaler': 1./0.012032137566147693},
                     'DESIGNVARIABLES.twist':
                         {'lb': -5,
                         'ub': 5,
                         'scaler': 1},
+                    # 'DESIGNVARIABLES.chord':
+                    #     {'lb': 1e-5,
+                    #     'ub': 1e1,
+                    #     'scaler': 1e3},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-3,
+                        {'lb': 1e-5,
                         'ub': 5e-1,
                         'scaler': 1e3},
                     }
@@ -83,8 +87,8 @@ if __name__ == '__main__':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
-                    'OPENAEROSTRUCT.AS_point_0.wing_perf.CL':
-                        {'equals': 0.41659956},
+                    'OPENAEROSTRUCT.AS_point_0.L_equals_W':
+                        {'equals': 0.},
                     'CONSTRAINTS.thrust_equals_drag':
                         {'equals': 0.}
                     }
@@ -106,14 +110,14 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
-        
+            
         # Check derivatives  
     if False:
-        # prob.check_totals(  compact_print=True, show_only_incorrect=True,
-        #                 form='central', step=1e-8, 
-        #                 rel_err_tol=1e-3, abs_err_tol=1e-4)
+        prob.check_totals(  compact_print=True, show_only_incorrect=True,
+                        form='central', step=1e-8, 
+                        rel_err_tol=1e-3)
         # prob.check_partials(compact_print=True, show_only_incorrect=True, 
-        #                             includes=['*blade_chord_spline_0*'], 
+        #                             excludes=['*HELIX_0*', '*HELIX_1*'], 
         #                             form='central', step=1e-8)
         
         quit()
@@ -124,17 +128,22 @@ if __name__ == '__main__':
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
+    # prob.driver.options['debug_print'] = ['desvars']
     prob.driver.opt_settings = {
         "Major feasibility tolerance": 1.0e-8,
         "Major optimality tolerance": 1.0e-8,
         "Minor feasibility tolerance": 1.0e-8,
-        "Verify level": -1,
+        "Verify level": 3,
         "Function precision": 1.0e-6,
         # "Major iterations limit": 1,
         "Nonderivative linesearch": None,
         "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop.out'),
         "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wingprop.out')
     }
+    
+    # prob.check_totals(  compact_print=True, show_only_incorrect=True,
+    #                     form='central', step=1e-8, 
+    #                     rel_err_tol=1e-3)
     
         # Initialise recorder
     db_name = os.path.join(BASE_DIR, 'results', 'data.db')
@@ -144,6 +153,7 @@ if __name__ == '__main__':
     prob.driver.add_recorder(recorder)
     # TODO: write code that checks whether the problem variable exists
     prob.driver.recording_options['includes'] = ["OPENAEROSTRUCT.wing.geometry.twist",
+                                                 "OPENAEROSTRUCT.wing.geometry.chord"
                                                  "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl",
                                                  "OPENAEROSTRUCT.AS_point_0.wing_perf.CDi",
                                                  'OPENAEROSTRUCT.AS_point_0.total_perf.L',

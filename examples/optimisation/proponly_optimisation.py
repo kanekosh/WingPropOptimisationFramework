@@ -27,7 +27,7 @@ if __name__=='__main__':
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/509.77978858}
+                    {'scaler': 1/1313.13086606}
                 }
 
     design_vars = {
@@ -38,16 +38,16 @@ if __name__=='__main__':
                     'HELIX_0.om_helix.geodef_parametric_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060.4532164},
-                    'DESIGNVARIABLES.rotor_0_chord':
-                        {'lb': -np.inf,
-                        'ub': np.inf,
-                        'scaler': 1./0.012032137566147693}
+                        'scaler': 1./1564.51314149},
+                    # 'DESIGNVARIABLES.rotor_0_chord':
+                    #     {'lb': -np.inf,
+                    #     'ub': np.inf,
+                    #     'scaler': 1./0.012032137566147693}
                     }
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 8.47001072}
+                        {'equals': 22.88221742}
                     }
     
     prob = om.Problem()
@@ -61,20 +61,13 @@ if __name__=='__main__':
     
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
-    
-    print('Variables:')
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_rot_rate"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_chord"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_twist"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_span"])
-    
-    quit()
+
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.opt_settings = {
     "Major feasibility tolerance": 1.0e-5,
-    "Major optimality tolerance": 1.0e-7,
+    "Major optimality tolerance": 1.0e-10,
     "Minor feasibility tolerance": 1.0-5,
     "Verify level": -1,
     "Function precision": 1.0e-6,

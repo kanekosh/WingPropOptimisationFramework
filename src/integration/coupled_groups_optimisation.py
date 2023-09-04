@@ -3,7 +3,7 @@
 # --- Internal ---
 from src.base import WingPropInfo, PropInfo, ParamInfo
 from src.models.propeller_model import PropellerModel, PropellerCoupled
-from src.models.wing_model import WingModel
+from src.models.wing_model import WingModelTube, WingModelWingBox
 from src.models.slipstream_model import SlipStreamModel
 from src.models.parameters import Parameters
 from src.models.design_variables import DesignVariables
@@ -58,7 +58,7 @@ class WingSlipstreamPropOptimisation(om.Group):
                            subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
 
         self.add_subsystem('OPENAEROSTRUCT',
-                           subsys=WingModel(WingPropInfo=wingpropinfo))
+                           subsys=WingModelTube(WingPropInfo=wingpropinfo))
 
         self.add_subsystem('HELIX_COUPLED',
                            subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
@@ -108,6 +108,10 @@ class WingSlipstreamPropOptimisation(om.Group):
                      'OPENAEROSTRUCT.load_factor')
         self.connect('PARAMETERS.empty_cg',
                      'OPENAEROSTRUCT.empty_cg')
+        self.connect('PARAMETERS.fuel_mass',
+                     'OPENAEROSTRUCT.AS_point_0.total_perf.L_equals_W.fuelburn')
+        self.connect('PARAMETERS.fuel_mass',
+                     'OPENAEROSTRUCT.AS_point_0.total_perf.CG.fuelburn')
 
         # DVs to HELIX
         for index, _ in enumerate(wingpropinfo.propeller):
@@ -210,7 +214,7 @@ class WingOptimisation(om.Group):
             WingPropInfo=wingpropinfo))
 
         self.add_subsystem('OPENAEROSTRUCT',
-                           subsys=WingModel(WingPropInfo=wingpropinfo))
+                           subsys=WingModelTube(WingPropInfo=wingpropinfo))
 
         # === Connections ===
         # DVs to OPENAEROSTRUCT
@@ -246,6 +250,10 @@ class WingOptimisation(om.Group):
                      'OPENAEROSTRUCT.load_factor')
         self.connect('PARAMETERS.empty_cg',
                      'OPENAEROSTRUCT.empty_cg')
+        self.connect('PARAMETERS.fuel_mass',
+                     'OPENAEROSTRUCT.AS_point_0.total_perf.L_equals_W.fuelburn')
+        self.connect('PARAMETERS.fuel_mass',
+                     'OPENAEROSTRUCT.AS_point_0.total_perf.CG.fuelburn')
 
     def configure(self):
         # === Options ===
@@ -312,7 +320,7 @@ class PropOptimisation(om.Group):
                 bspline_interpolant(
                     s=np.linspace(0, 1, self.blade_nDVSec), 
                     x=np.linspace(0, 1, 20), 
-                    order=4, 
+                    order=3, 
                     deriv_1=False, deriv_2=True
                 ),
             )
@@ -321,7 +329,7 @@ class PropOptimisation(om.Group):
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
                                                      PropInfo=wingpropinfo.propeller[propeller_nr]))
             
-            # Connections are given here for readability
+            # Connections are given here for readability            
             self.connect(f"DESIGNVARIABLES.rotor_{propeller_nr}_chord",
                          f"blade_chord_spline_{propeller_nr}.ctl_pts")
             self.connect(f"blade_chord_spline_{propeller_nr}.y",
@@ -343,6 +351,7 @@ class PropOptimisation(om.Group):
         objective = self.options['objective']
         constraints = self.options['constraints']
         design_vars = self.options['design_vars']
+        chord_included = False
 
         # === Add design variables ===
         for design_var_key in design_vars.keys():
@@ -350,6 +359,8 @@ class PropOptimisation(om.Group):
                                 lower=design_vars[design_var_key]['lb'],
                                 upper=design_vars[design_var_key]['ub'],
                                 scaler=design_vars[design_var_key]['scaler'])
+            if 'chord' in design_var_key:
+                chord_included=True
 
         # === Add constraints ===
         for constraints_key in constraints.keys():
@@ -372,14 +383,15 @@ class PropOptimisation(om.Group):
                     break  # TODO: there's a better way to solve this issue
                 
         # === Additional non-adjustable constraints ===
-        for propeller_nr, _ in enumerate(wingpropinfo.propeller):
-            self.add_constraint(f"blade_chord_spline_{propeller_nr}.d2y", upper=0.0)
-            self.add_constraint(
-                f"blade_chord_spline_{propeller_nr}.y", equals=wingpropinfo.propeller[propeller_nr].chord[0], indices=[0], scaler=100.0, alias="chord_root"
-            )
-            self.add_constraint(
-                f"blade_chord_spline_{propeller_nr}.y", lower=0.001, upper=0.05, scaler=100.0, indices=range(1, 20), alias="chord_span"
-            )
+        if chord_included:
+            for propeller_nr, _ in enumerate(wingpropinfo.propeller):
+                self.add_constraint(f"blade_chord_spline_{propeller_nr}.d2y", upper=0.0)
+                self.add_constraint(
+                    f"blade_chord_spline_{propeller_nr}.y", equals=wingpropinfo.propeller[propeller_nr].chord[0], indices=[0], scaler=100.0, alias="chord_root"
+                )
+                self.add_constraint(
+                    f"blade_chord_spline_{propeller_nr}.y", lower=0.001, upper=0.05, scaler=100.0, indices=range(1, 20), alias="chord_span"
+                )
 
         # === Add objective ===
         for objective_key in objective.keys():
