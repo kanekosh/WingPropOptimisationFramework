@@ -1,8 +1,8 @@
 # --- Built-ins ---
+import os
 
 # --- Internal ---
-from src.base import WingPropInfo, WingInfo
-from src.utils.meshing import meshing
+from src.base import WingPropInfo
 from openaerostruct.integration.aerostruct_groups import AerostructGeometry, AerostructPoint
 
 # --- External ---
@@ -21,6 +21,7 @@ class WingModel(om.Group):
         winginfo = wingpropinfo.wing
         
         # === Components ===
+        thickness_cp = winginfo.thickness
         twist_cp = winginfo.twist
         chord_cp = winginfo.chord
         
@@ -32,17 +33,17 @@ class WingModel(om.Group):
                         "symmetry": False,  # if true, model one half of wing reflected across the plane y = 0
                         "S_ref_type": "wetted",  # how we compute the wing area,        # can be 'wetted' or 'projected'
                         "fem_model_type": "tube",
-                        "thickness_cp": np.array([0.1, 0.2, 0.3]),
+                        "thickness_cp": thickness_cp, # thickness of material
                         "twist_cp": twist_cp,
-                        "chord_cp": mesh,
+                        "chord_cp": np.ones(len(chord_cp)),
                         "mesh": mesh,
                         "span": winginfo.span,
-                        "CL0": 0.0,  # CL of the surface at alpha=0
+                        "CL0": winginfo.CL0,  # CL of the surface at alpha=0
                         "CD0": 0.015,  # CD of the surface at alpha=0
                         "k_lam": 0.05,  # percentage of chord with laminar flow, used for viscous drag
                         "t_over_c_cp": np.array([0.15]),  # thickness over chord ratio (NACA0015)
                         "c_max_t": 0.303,  # chordwise location of maximum (NACA0015) thickness
-                        "with_viscous": True,
+                        "with_viscous": False,
                         "with_wave": False,  # if true, compute wave drag
                         # Structural values are based on aluminum 7075
                         "E": 70.0e9,  # [Pa] Young's modulus of the spar

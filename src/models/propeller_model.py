@@ -1,7 +1,7 @@
 # --- Built-ins ---
 
 # --- Internal ---
-from src.base import PropInfo
+from src.base import ParamInfo, PropInfo, WingPropInfo
 import helix.parameters.simparam_def as py_simparam_def
 import helix.references.references_def as py_ref_def
 import helix.geometry.geometry_def as py_geo_def
@@ -12,14 +12,53 @@ import helix.openmdao.om_helix as om_helix
 import openmdao.api as om
 import numpy as np
 
+TIME_STEPS_HELIX = 5 # timesteps taken by helix
 
-class PropellerModel(om.Group):
+class PropellerCoupled(om.ExplicitComponent):
     def initialize(self):
-        self.options.declare('PropellerInfo', default=PropInfo)
+        self.options.declare('WingPropInfo', default=WingPropInfo)
         
     def setup(self):
         # === Options ===
-        self.propellerinfo = self.options["PropellerInfo"]
+        self.wingpropinfo = self.options["WingPropInfo"]
+        
+        # === Inputs ===
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            self.add_input(f'thrust_prop_{propeller_nr}', shape_by_conn=True)
+            self.add_input(f'power_prop_{propeller_nr}', shape_by_conn=True)
+                # the 'shape_by_conn=True' is not best practice but HELIX time dependent so it was necessary
+            
+        # === Outputs ===
+        self.add_output('thrust_total', shape=1)
+        self.add_output('power_total', shape=1)
+        
+        # === Partials ===
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            self.declare_partials('thrust_total', f'thrust_prop_{propeller_nr}', 
+                                    rows=[0], cols=[3*TIME_STEPS_HELIX-1], val=1)
+            self.declare_partials('power_total', f'power_prop_{propeller_nr}', 
+                                    rows=[0], cols=[0], val=1)
+        
+    def compute(self, inputs, outputs):
+        thrust, power = [], []
+        
+        for propeller_nr in range(self.wingpropinfo.nr_props):
+            thrust.append(inputs[f'thrust_prop_{propeller_nr}'][2, TIME_STEPS_HELIX-1]) # only last entries contain the value
+            power.append(inputs[f'power_prop_{propeller_nr}'][0])
+            
+        outputs['thrust_total'] = np.sum(thrust)
+        outputs['power_total'] = np.sum(power)
+
+
+class PropellerModel(om.Group):
+    def initialize(self):
+        self.options.declare('ParamInfo', default=ParamInfo)
+        self.options.declare('PropInfo', default=PropInfo)
+        
+    def setup(self):
+        # === Options ===
+        self.paraminfo = self.options["ParamInfo"]
+        self.propellerinfo = self.options["PropInfo"]
 
         # === Components ===
         simparam_def = self._simparam_definition()
@@ -45,16 +84,17 @@ class PropellerModel(om.Group):
     # rst simparam
     def _simparam_definition(self):
         simparam = py_simparam_def.t_simparam_def()
-        simparam.basename = "exampleOpt"
+        simparam.basename = "PropModel"
 
-        simparam.nt = 5
+        simparam.nt = TIME_STEPS_HELIX
+        simparam.dt = 1.0
         simparam.t_start = 0.0
         simparam.t_end = 0.1
 
         simparam.nt_rev = 30
 
-        simparam.v_inf = np.array([0.0, 0.0, -1.0])
-        simparam.rho_inf = 1.25
+        simparam.v_inf = np.array([0.0, 0.0, -self.paraminfo.vinf]) # TODO: assuming axial flow
+        simparam.rho_inf = self.paraminfo.air_density
 
         return simparam
 
@@ -71,7 +111,7 @@ class PropellerModel(om.Group):
         Hub.Name = "Hub"
         Hub.Parent = "Root"
         Hub.origin = np.array([0.0, 0.0, 0.0])
-        Hub.orientation = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+        Hub.orientation = self.propellerinfo.hub_orientation
 
         Hub.moving = False
 
@@ -89,67 +129,60 @@ class PropellerModel(om.Group):
         geometry_def = py_geo_def.t_geometry_def()
 
         # ---------------------------- Blade Parameters -------------------------- #
-        rotor1 = py_geo_def_parametric.t_geometry_def_parametric()
-        rotor1.CompName = "Rotor1"
-        rotor1.CompType = "rotor"
-        rotor1.RefName = "Hub"
+        rotor = py_geo_def_parametric.t_geometry_def_parametric()
+        rotor.CompName = "rotor"
+        rotor.CompType = "rotor"
+        rotor.RefName = "Hub"
 
         # Reference Parameters
-        N_span = 1
-        rotor1.ref_point = np.array([0.0, 0.0, 0.0])
-        rotor1.ref_chord_frac = 0.5
+        N_span = len(self.propellerinfo.span) # this defines nodes, NOT CONTROL POINTS
+        rotor.ref_point = self.propellerinfo.ref_point
+        rotor.ref_chord_frac = 0.5
 
         # Symmetry Parameters
-        rotor1.symmetry = False
-        rotor1.symmetry_point = np.array([0.0, 0.0, 0.0])
-        rotor1.symmetry_normal = np.array([0.0, 1.0, 0.0])
+        rotor.symmetry = False
+        rotor.symmetry_point = np.array([0.0, 0.0, 0.0])
+        rotor.symmetry_normal = np.array([0.0, 1.0, 0.0])
 
         # Mirror Parameters
-        rotor1.mirror = False
-        rotor1.mirror_point = np.array([0.0, 0.0, 0.0])
-        rotor1.mirror_normal = np.array([0.0, 1.0, 0.0])
+        rotor.mirror = False
+        rotor.mirror_point = np.array([0.0, 0.0, 0.0])
+        rotor.mirror_normal = np.array([0.0, 1.0, 0.0])
 
         # Initialize Rotor and Allocate Arrays
-        rotor1.initialize_parametric_geometry_definition(N_span)
+        rotor.initialize_parametric_geometry_definition(N_span)
 
-        rotor1.multiple = True
-        rotor1.multiplicity = {
+        rotor.multiple = True
+        rotor.multiplicity = {
             "mult_type": "rotor",
             "n_blades": self.propellerinfo.nr_blades,
             "rot_axis": self.propellerinfo.rotation_axis,
             "rot_rate": self.propellerinfo.rot_rate,
             "psi_0": 0.0,
-            "hub_offset": self.propellerinfo.hub_offset,
+            "hub_offset": 0.,
             "n_dofs": 0,
         }
 
         # ------------------------ Blade Section Definition ---------------------- #
-        # Chord 1 ------------------
-        rotor1.sec[0].chord = 0.02
-        rotor1.sec[0].twist = 10.0
-        rotor1.sec[0].thick = 0.12 * 0.02
-        rotor1.sec[0].alpha_0 = 20.6 * np.pi / 180.0
-        rotor1.sec[0].alpha_L0 = -2.0 * np.pi / 180.0
-        rotor1.sec[0].Cl_alpha = 1.7 * np.pi
-        rotor1.sec[0].M = 50.0
+        for iSection in range(N_span+1):
+            # This defines the properties at mesh nodes
+            rotor.sec[iSection].chord = self.propellerinfo.chord[iSection]
+            rotor.sec[iSection].twist = self.propellerinfo.twist[iSection]
+            rotor.sec[iSection].alpha_0 = self.propellerinfo.airfoils[iSection].alpha_0
+            rotor.sec[iSection].alpha_L0 = self.propellerinfo.airfoils[iSection].alpha_L0
+            rotor.sec[iSection].Cl_alpha = self.propellerinfo.airfoils[iSection].Cl_alpha
+            rotor.sec[iSection].M = self.propellerinfo.airfoils[iSection].M # this determine how steep the stall curve is
 
-        # Span 1  ------------------
-        rotor1.span[0].span = 0.1  # 0.05
-        rotor1.span[0].sweep = 0.0
-        rotor1.span[0].dihed = 0.0
-        rotor1.span[0].N_elem_span = 10
-        rotor1.span[0].span_type = "uniform"
-
-        # Chord 2 ------------------
-        rotor1.sec[1].chord = 0.02
-        rotor1.sec[1].twist = 10.0
-        rotor1.sec[1].thick = 0.12 * 0.02
-        rotor1.sec[1].alpha_0 = 20.6 * np.pi / 180.0
-        rotor1.sec[1].alpha_L0 = -2.0 * np.pi / 180.0
-        rotor1.sec[1].Cl_alpha = 1.7 * np.pi
-        rotor1.sec[1].M = 50.0
+        # Span Sections
+        for iSpan in range(N_span):
+            # This defines the properties at control points
+            rotor.span[iSpan].span = self.propellerinfo.span[iSpan]
+            rotor.span[iSpan].sweep = 0.0
+            rotor.span[iSpan].dihed = 0.0
+            rotor.span[iSpan].N_elem_span = self.propellerinfo.local_refinement # local refinement of spanwise blade section
+            rotor.span[iSpan].span_type = "uniform"
 
         # Append To Vehicle
-        geometry_def.append_component(rotor1)
+        geometry_def.append_component(rotor)
 
         return geometry_def
