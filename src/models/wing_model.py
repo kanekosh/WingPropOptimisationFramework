@@ -53,7 +53,7 @@ class WingModelTube(om.Group):
                         "mrho": 3.0e3,  # [kg/m^3] material density
                         "fem_origin": 0.35,  # normalized chordwise location of the spar
                         "wing_weight_ratio": 2.0,
-                        "struct_weight_relief": True,  # True to add the weight of the structure to the loads on the structure
+                        "struct_weight_relief": False,  # True to add the weight of the structure to the loads on the structure
                         "distributed_fuel_weight": False,
                         # Constraints
                         "exact_failure_constraint": True,  # if false, use KS function

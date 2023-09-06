@@ -17,8 +17,8 @@ class ParamInfo:
     mach_number: float
     reynolds_number: float
     speed_of_sound: float
-    R: float = 11.165e6
-    CT: float = grav_constant * 17.0e-6
+    R: float = 0 # we fly electric
+    CT: float = 0 # grav_constant * 17.0e-6
     air_density: float = 1.225
 
 

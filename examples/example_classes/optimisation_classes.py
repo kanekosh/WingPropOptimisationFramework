@@ -39,11 +39,11 @@ spanwise_discretisation_propeller_BEM = len(span)
 
 
 PROWIM_parameters = ParamInfo(vinf=40.,
-                                wing_aoa=3., # TODO: this is a wing property
-                                mach_number=0.2,
-                                reynolds_number=3_500_000,
-                                speed_of_sound=333.4,
-                                air_density=1.2087)
+                       wing_aoa=2., # TODO: this is a wing property
+                       mach_number=0.2,
+                       reynolds_number=640_000,
+                       speed_of_sound=333.4,
+                       air_density=1.2087)
 
 PROWIM_prop_1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
@@ -82,20 +82,20 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                thickness = np.ones(5)*0.001,
-                chord=np.ones(5,
+                thickness = np.ones(9)*0.001,
+                chord=np.ones(9,
                               order='F')*wing_chord,
-                twist=np.ones(5,
+                twist=np.ones(9,
                               order='F')*wing_twist,
                 empty_weight=10.,
                 CL0 = 0.283
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=30,
-                                    spanwise_discretisation_propeller=9,
-                                    spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
-                                    propeller=[PROWIM_prop_1, PROWIM_prop_2],
-                                    wing=PROWIM_wing,
-                                    parameters=PROWIM_parameters
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
+                            spanwise_discretisation_propeller=25,
+                            spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
+                            propeller=[PROWIM_prop_1, PROWIM_prop_2],
+                            wing=PROWIM_wing,
+                            parameters=PROWIM_parameters
                             )

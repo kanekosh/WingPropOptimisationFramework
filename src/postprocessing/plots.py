@@ -61,14 +61,19 @@ def all_plots(db_name: str,
                 Cl_wing_orig = first_case.outputs[misckey]
                 Cl_wing_opt = last_case.outputs[misckey]
                 
-                chord_orig = first_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
-                chord_opt = last_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+                try:
+                    chord_orig = first_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+                    chord_opt = last_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+                    
+                    chord_nodes_orig = np.zeros(len(Cl_wing_opt))
+                    chord_nodes_orig = [(chord_orig[index]+chord_orig[index+1])/2 for index in range(len(chord_orig)-1)]
+                    
+                    chord_nodes_opt = np.zeros(len(Cl_wing_opt))
+                    chord_nodes_opt = [(chord_opt[index]+chord_opt[index+1])/2 for index in range(len(chord_opt)-1)]
                 
-                chord_nodes_orig = np.zeros(len(Cl_wing_opt))
-                chord_nodes_orig = [(chord_orig[index]+chord_orig[index+1])/2 for index in range(len(chord_orig)-1)]
-                
-                chord_nodes_opt = np.zeros(len(Cl_wing_opt))
-                chord_nodes_opt = [(chord_opt[index]+chord_opt[index+1])/2 for index in range(len(chord_opt)-1)]
+                except:
+                    chord_nodes_orig = np.ones(len(Cl_wing_opt))
+                    chord_nodes_opt = np.ones(len(Cl_wing_opt))
 
                 # === Plotting misc variables ===
                 var_x = np.linspace(-span/2, span/2, len(Cl_wing_orig))
@@ -83,20 +88,20 @@ def all_plots(db_name: str,
                 twist_opt = last_case.outputs[misckey][0]
 
                 # === Plotting misc variables ===
-                var_x = wingpropinfo.vlm_mesh[0, :, 1]
+                var_x = np.linspace(-wingpropinfo.wing.span/2, wingpropinfo.wing.span/2, len(twist_orig)) # wingpropinfo.vlm_mesh[0, :, 1]
                 optimisation_result_plot(design_variable_array=var_x, original=twist_orig, optimised=twist_opt,
                                          label=r"$Twist, deg$", xlabel=r'Wing spanwise location', ylabel=r"$Twist, deg$",
                                          savepath=os.path.join(savedir, f'Wing_twist_DV'))
                 
-            elif 'blade_chord_spline_0.y' in misckey:
-                twist_orig = first_case.outputs[misckey]
-                twist_opt = last_case.outputs[misckey]
+            elif 'wing.geometry.chord' in misckey:
+                chord_orig = first_case.outputs[misckey][0]
+                chord_opt = last_case.outputs[misckey][0]
 
                 # === Plotting misc variables ===
-                var_x = np.linspace(0, 1, len(twist_orig))
-                optimisation_result_plot(design_variable_array=var_x, original=twist_orig, optimised=twist_opt,
-                                         label=r"$Propeller, deg$", xlabel=r'Normalised propeller blade', ylabel=r"$Twist, deg$",
-                                         savepath=os.path.join(savedir, f'Prop_twist_DV'))
+                var_x = wingpropinfo.vlm_mesh[0, :, 1]
+                optimisation_result_plot(design_variable_array=var_x, original=chord_orig, optimised=chord_opt,
+                                         label=r"$Chord, m$", xlabel=r'Wing spanwise location', ylabel=r"$Chord, m$",
+                                         savepath=os.path.join(savedir, f'Wing_chord_DV'))
 
     except Exception as e:
         print(f'No CL found: {e}')

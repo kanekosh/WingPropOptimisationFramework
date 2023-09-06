@@ -25,33 +25,36 @@ if __name__ == '__main__':
     # all_plots(db_name=db_name,
     #           wingpropinfo=PROWIM_wingpropinfo,
     #           savedir=savepath)
-    
     # quit()
-    PROWIM_wingpropinfo.wing.empty_weight = 3.6125
+
+    PROWIM_wingpropinfo.wing.empty_weight = 10.
+    PROWIM_wingpropinfo.wing.span = 0.748*7 # to make T=D
+    # PROWIM_wingpropinfo.wing.chord *= 2 # to make T=D
+    # PROWIM_wingpropinfo.wing.thickness *= 10 # to make T=D
     
     objective = {
                 'OPENAEROSTRUCT.AS_point_0.total_perf.CD':
-                    {'scaler': 1/0.04123006}
+                    {'scaler': 1/0.03384828}
                 }
 
     design_vars = {
                     'DESIGNVARIABLES.twist':
-                        {'lb': -10,
-                        'ub': 10,
+                        {'lb': -20,
+                        'ub': 20,
                         'scaler': 1},
                     'DESIGNVARIABLES.chord':
-                        {'lb': 1e-5,
-                        'ub': 2,
-                        'scaler': 10},
+                        {'lb': 0.,
+                        'ub': 30,
+                        'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-5,
+                        {'lb': 1e-3,
                         'ub': 5e-1,
                         'scaler': 1e3},
                     }
 
     constraints = {
-                    'OPENAEROSTRUCT.AS_point_0.L_equals_W':
-                        {'equals': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.L':
+                        {'equals': 349.76381705},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
@@ -97,7 +100,7 @@ if __name__ == '__main__':
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
                                                     "OPENAEROSTRUCT.wing.geometry.chord",
                                                     "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl"
-                                                 ]
+                                                ]
     
     print('==========================================================')
     print('====================== Optimisation ======================')
