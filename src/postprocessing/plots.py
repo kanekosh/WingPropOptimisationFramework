@@ -81,14 +81,14 @@ def all_plots(db_name: str,
                                          original=Cl_wing_orig*chord_nodes_orig,
                                          optimised=Cl_wing_opt*chord_nodes_opt,
                                          label=r"$C_l \cdot c$", xlabel=r'Wing spanwise location', ylabel=r"Lift coefficient, $C_l \cdot c$",
-                                         savepath=os.path.join(savedir, f'Clc_Wing'))
+                                         savepath=os.path.join(savedir, f'Cl_Wing'))
 
             elif 'wing.geometry.twist' in misckey:
                 twist_orig = first_case.outputs[misckey][0]
                 twist_opt = last_case.outputs[misckey][0]
 
                 # === Plotting misc variables ===
-                var_x = np.linspace(-wingpropinfo.wing.span/2, wingpropinfo.wing.span/2, len(twist_orig)) # wingpropinfo.vlm_mesh[0, :, 1]
+                var_x = wingpropinfo.vlm_mesh[0, :, 1]
                 optimisation_result_plot(design_variable_array=var_x, original=twist_orig, optimised=twist_opt,
                                          label=r"$Twist, deg$", xlabel=r'Wing spanwise location', ylabel=r"$Twist, deg$",
                                          savepath=os.path.join(savedir, f'Wing_twist_DV'))

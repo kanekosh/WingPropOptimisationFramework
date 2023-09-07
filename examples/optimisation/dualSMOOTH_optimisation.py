@@ -20,21 +20,15 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    # db_name = os.path.join(BASE_DIR, 'results', 'data.db')
-    # # === Plotting ===
-    # savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
-    # all_plots(db_name=db_name,
-    #           wingpropinfo=PROWIM_wingpropinfo,
-    #           savedir=savepath)
-    
-    # quit()
-    
-    # Adjustment to the PROWIM setup
-    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 25 # to make T=D
-    PROWIM_wingpropinfo.__post_init__()
+    db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
+    # === Plotting ===
+    savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
+    all_plots(db_name=db_name,
+              wingpropinfo=PROWIM_wingpropinfo,
+              savedir=savepath)
 
-    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
-    PROWIM_wingpropinfo.wing.span = 2 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 10 # to make T=D
+    PROWIM_wingpropinfo.wing.span = 5 # to make T=D
     # for index in range(len(PROWIM_wingpropinfo.propeller)):
     #     PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
         # PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
@@ -47,18 +41,18 @@ if __name__ == '__main__':
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/654}
+                    {'scaler': 1/433.04277037}
                 }
 
     design_vars = {
                     'DESIGNVARIABLES.rotor_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1050},
+                        'scaler': 1./1060},
                     'DESIGNVARIABLES.rotor_1_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1050},
+                        'scaler': 1./1060},
                     'DESIGNVARIABLES.rotor_0_twist':
                         {'lb': 0,
                         'ub': 90,
@@ -68,12 +62,12 @@ if __name__ == '__main__':
                         'ub': 90,
                         'scaler': 1./10},
                     'DESIGNVARIABLES.twist':
-                        {'lb': -5,
-                        'ub': 10,
+                        {'lb': -10,
+                        'ub': 15,
                         'scaler': 1},
                     # 'DESIGNVARIABLES.chord':
-                    #     {'lb': 1e-5,
-                    #     'ub': 1e1,
+                    #     {'lb': 1e-2,
+                    #     'ub': 1,
                     #     'scaler': 1e3},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 1e-5,
@@ -84,6 +78,8 @@ if __name__ == '__main__':
     constraints = {
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
+                    'OPENAEROSTRUCT.wing.structural_mass':
+                        {'lower': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.L_equals_W':
@@ -109,7 +105,7 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
-                
+                    
         # Check derivatives  
     if False:
         prob.check_totals(  compact_print=True, show_only_incorrect=True,
@@ -132,9 +128,9 @@ if __name__ == '__main__':
         "Major feasibility tolerance": 1.0e-8,
         "Major optimality tolerance": 1.0e-8,
         "Minor feasibility tolerance": 1.0e-8,
-        "Verify level": 1,
+        "Verify level": -1,
         "Function precision": 1.0e-6,
-        "Major iterations limit": 1,
+        # "Major iterations limit": 1,
         "Nonderivative linesearch": None,
         "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop.out'),
         "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wingprop.out')
@@ -152,8 +148,8 @@ if __name__ == '__main__':
     prob.driver.add_recorder(recorder)
     # TODO: write code that checks whether the problem variable exists
     prob.driver.recording_options['includes'] = ["OPENAEROSTRUCT.wing.geometry.twist",
-                                                 "OPENAEROSTRUCT.wing.geometry.chord"
-                                                 "OPENAEROSTRUCT.AS_point_0.wing_perf.aero_funcs.Cl",
+                                                 "OPENAEROSTRUCT.wing.geometry.chord",
+                                                 "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl",
                                                  "OPENAEROSTRUCT.AS_point_0.wing_perf.CDi",
                                                  'OPENAEROSTRUCT.AS_point_0.total_perf.L',
                                                  'OPENAEROSTRUCT.AS_point_0.total_perf.D',

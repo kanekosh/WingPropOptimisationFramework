@@ -42,7 +42,7 @@ class WingModelTube(om.Group):
                         "W0": winginfo.empty_weight,
                         "CD0": 0.015,  # CD of the surface at alpha=0
                         "k_lam": 0.05,  # percentage of chord with laminar flow, used for viscous drag
-                        "t_over_c_cp": np.array([0.15]),  # thickness over chord ratio (NACA0015)
+                        "t_over_c_cp": np.array([0.2]),  # thickness over chord ratio (NACA0015)
                         "c_max_t": 0.303,  # chordwise location of maximum (NACA0015) thickness
                         "with_viscous": True,
                         "with_wave": False,  # if true, compute wave drag
@@ -54,7 +54,7 @@ class WingModelTube(om.Group):
                         "fem_origin": 0.35,  # normalized chordwise location of the spar
                         "wing_weight_ratio": 2.0,
                         "struct_weight_relief": False,  # True to add the weight of the structure to the loads on the structure
-                        "distributed_fuel_weight": False,
+                        "distributed_fuel_weight": True,
                         # Constraints
                         "exact_failure_constraint": True,  # if false, use KS function
                     }

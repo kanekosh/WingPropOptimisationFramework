@@ -27,10 +27,8 @@ if __name__ == '__main__':
     #           savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 10.
-    PROWIM_wingpropinfo.wing.span = 0.748*7 # to make T=D
-    # PROWIM_wingpropinfo.wing.chord *= 2 # to make T=D
-    # PROWIM_wingpropinfo.wing.thickness *= 10 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.span = 2 # to make T=D
     
     objective = {
                 'OPENAEROSTRUCT.AS_point_0.total_perf.CD':
@@ -43,8 +41,8 @@ if __name__ == '__main__':
                         'ub': 20,
                         'scaler': 1},
                     'DESIGNVARIABLES.chord':
-                        {'lb': 0.,
-                        'ub': 30,
+                        {'lb': 0.1,
+                        'ub': 1.5,
                         'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 1e-3,
