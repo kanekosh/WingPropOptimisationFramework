@@ -29,7 +29,7 @@ def meshing(span: float, chord: float, prop_locations: np.array, prop_radii: np.
     mesh[:, :, 2] = 0.0
     mesh[:, :, 1] = y_vlm
     mesh[:, :, 0] = np.zeros(ny)
-    mesh[0, :, 0] = -np.ones(ny)*0.5*chord
-    mesh[1, :, 0] = np.ones(ny)*0.5*chord
+    mesh[0, :, 0] = np.zeros(ny)
+    mesh[1, :, 0] = np.ones(ny)*chord
 
     return np.array(mesh, order='F')

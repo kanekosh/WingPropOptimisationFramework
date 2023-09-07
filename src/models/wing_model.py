@@ -57,6 +57,7 @@ class WingModelTube(om.Group):
                         "distributed_fuel_weight": True,
                         # Constraints
                         "exact_failure_constraint": True,  # if false, use KS function
+                        "Wf_reserve": 0
                     }
 
         aerostruct_group = AerostructGeometry(surface=surface)

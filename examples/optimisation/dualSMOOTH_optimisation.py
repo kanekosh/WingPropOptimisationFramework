@@ -27,8 +27,8 @@ if __name__ == '__main__':
               wingpropinfo=PROWIM_wingpropinfo,
               savedir=savepath)
 
-    PROWIM_wingpropinfo.wing.empty_weight = 10 # to make T=D
-    PROWIM_wingpropinfo.wing.span = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.span = 3 # to make T=D
     # for index in range(len(PROWIM_wingpropinfo.propeller)):
     #     PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
         # PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                         'scaler': 1./10},
                     'DESIGNVARIABLES.twist':
                         {'lb': -10,
-                        'ub': 15,
+                        'ub': 10,
                         'scaler': 1},
                     # 'DESIGNVARIABLES.chord':
                     #     {'lb': 1e-2,
