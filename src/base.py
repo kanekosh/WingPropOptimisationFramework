@@ -93,14 +93,13 @@ class WingPropInfo:
     NO_CORRECTION: bool = False # set this to true if you want to run the system without a correction factor
     NO_PROPELLER: bool = False # Set this to true to run system without propeller or correction
     
+    linear_mesh: bool = False
+    
     if NO_PROPELLER:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
     def __post_init__(self):
         self.nr_props = len(self.propeller)
-        self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \
-            self.nr_props*self.spanwise_discretisation_propeller + 1
-
         self.prop_locations = np.zeros((self.nr_props), order='F')
         self.prop_radii = np.zeros(
             (self.nr_props, self.spanwise_discretisation_propeller_BEM+1), order='F')
@@ -116,9 +115,24 @@ class WingPropInfo:
                                 prop_radii=self.prop_radii,
                                 nr_props=self.nr_props,
                                 spanwise_discretisation_wing=self.spanwise_discretisation_wing,
-                                spanwise_discretisation_propeller=self.spanwise_discretisation_propeller,
-                                total_nodes=self.spanwise_discretisation_nodes)
-
+                                spanwise_discretisation_propeller=self.spanwise_discretisation_propeller)
+        
+        self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
+        
+        # TODO: fix this class, it looks pretty terrible rn
+        if self.linear_mesh:
+            from openaerostruct.geometry.utils import generate_mesh
+            
+            num_cp = len(self.wing.twist)
+            mesh_dict = {"num_y": self.spanwise_discretisation_nodes,
+                "num_x": 2,
+                "wing_type": "rect",
+                "symmetry": False,
+                "span": self.wing.span,
+                "root_chord": self.wing.chord[0],
+                "num_twist_cp": num_cp
+                }
+        
         self.vlm_mesh_control_points = np.zeros(
             self.spanwise_discretisation_nodes-1, order='F')
 

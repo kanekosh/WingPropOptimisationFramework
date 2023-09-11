@@ -93,7 +93,7 @@ def all_plots(db_name: str,
                                          label=r"$Twist, deg$", xlabel=r'Wing spanwise location', ylabel=r"$Twist, deg$",
                                          savepath=os.path.join(savedir, f'Wing_twist_DV'))
                 
-            elif 'wing.geometry.chord' in misckey:
+            elif misckey=='OPENAEROSTRUCT.wing.geometry.chord':
                 chord_orig = first_case.outputs[misckey][0]
                 chord_opt = last_case.outputs[misckey][0]
 
@@ -257,7 +257,9 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
     niceplots.adjust_spines(ax, outward=True)
 
     plt.savefig(savepath)
-
+    
+    plt.clf()
+    plt.close()
 
 def optimisation_singlevalue_results(design_variable_array: np.array,
                                      xlabel: str, ylabel: str,
@@ -275,6 +277,9 @@ def optimisation_singlevalue_results(design_variable_array: np.array,
     niceplots.adjust_spines(ax, outward=True)
 
     plt.savefig(savepath)
+    
+    plt.clf()
+    plt.close()
 
 
 # if __name__ == '__main__':

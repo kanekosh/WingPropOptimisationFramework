@@ -27,7 +27,7 @@ if __name__ == '__main__':
               wingpropinfo=PROWIM_wingpropinfo,
               savedir=savepath)
 
-    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
     PROWIM_wingpropinfo.wing.span = 3 # to make T=D
     # for index in range(len(PROWIM_wingpropinfo.propeller)):
     #     PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         #                                                             order='F'
         #                                                     )
     
-    
+    PROWIM_wingpropinfo.__post_init__()
     objective = {
                 'HELIX_COUPLED.power_total':
                     {'scaler': 1/433.04277037}
@@ -65,12 +65,12 @@ if __name__ == '__main__':
                         {'lb': -10,
                         'ub': 10,
                         'scaler': 1},
-                    # 'DESIGNVARIABLES.chord':
-                    #     {'lb': 1e-2,
-                    #     'ub': 1,
-                    #     'scaler': 1e3},
+                    'DESIGNVARIABLES.chord':
+                        {'lb': 1e-2,
+                        'ub': 1,
+                        'scaler': 1e3},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-5,
+                        {'lb': 1e-3,
                         'ub': 5e-1,
                         'scaler': 1e3},
                     }

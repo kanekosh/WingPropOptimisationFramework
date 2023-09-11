@@ -27,32 +27,37 @@ if __name__ == '__main__':
     #           savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
-    PROWIM_wingpropinfo.wing.span = 2 # to make T=D
+    # PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
+    # PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
+    # PROWIM_wingpropinfo.wing.span = 0.748*2
+    # PROWIM_wingpropinfo.linear_mesh = True
+    
+    # PROWIM_wingpropinfo.__post_init__()
     
     objective = {
-                'OPENAEROSTRUCT.AS_point_0.total_perf.CD':
-                    {'scaler': 1/0.03384828}
+                'OPENAEROSTRUCT.AS_point_0.wing_perf.CD':
+                    {'scaler': 1/0.0293542}
                 }
 
     design_vars = {
-                    'DESIGNVARIABLES.twist':
-                        {'lb': -20,
-                        'ub': 20,
+                    'OPENAEROSTRUCT.wing.twist_cp':
+                        {'lb': -10,
+                        'ub': 15,
                         'scaler': 1},
-                    'DESIGNVARIABLES.chord':
-                        {'lb': 0.1,
-                        'ub': 1.5,
+                    'OPENAEROSTRUCT.wing.geometry.chord_cp':
+                        {'lb': 0.0,
+                        'ub': 30,
                         'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-3,
+                        {'lb': 1e-2,
                         'ub': 5e-1,
-                        'scaler': 1e3},
+                        'scaler': 1e2},
                     }
 
     constraints = {
-                    'OPENAEROSTRUCT.AS_point_0.total_perf.L':
-                        {'equals': 349.76381705},
+                    'OPENAEROSTRUCT.AS_point_0.L_equals_W':
+                        {'equals': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
@@ -68,6 +73,7 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
+    om.n2(prob, 'wingonly_opt.html')
     
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
@@ -82,7 +88,7 @@ if __name__ == '__main__':
     "Minor feasibility tolerance": 1.0e-8,
     "Verify level": -1,
     "Function precision": 1.0e-6,
-    # "Major iterations limit": 50,
+    # "Major iterations limit": 2,
     "Nonderivative linesearch": None,
     "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wing.out'),
     "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wing.out')
@@ -94,7 +100,8 @@ if __name__ == '__main__':
     recorder = om.SqliteRecorder(db_name)
     prob.driver.add_recorder(recorder)
     prob.driver.add_recorder(recorder)
-    prob.driver.recording_options['includes'] = [
+    prob.driver.recording_options['includes'] = [   
+                                                    "OPENAEROSTRUCT.wing.mesh",
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
                                                     "OPENAEROSTRUCT.wing.geometry.chord",
                                                     "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl"

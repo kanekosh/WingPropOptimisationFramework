@@ -8,20 +8,32 @@ import numpy as np
 
 
 def meshing(span: float, chord: float, prop_locations: np.array, prop_radii: np.array, nr_props: int, 
-            spanwise_discretisation_wing: int, spanwise_discretisation_propeller: int, total_nodes: int):
-    # TODO: include variable chord
-    ny = total_nodes
-    y_vlm = np.zeros(ny, order='F')
-    # TODO: Move these calculations to Python, makes debugging easier
-    vlm_mesh(span=span,
-             y_vlm=y_vlm,
-             prop_locations=prop_locations,
-             prop_radii=np.array(prop_radii[:, ::-1], order='F'), # reverse the radius input
-             nr_props=nr_props,
-             panels_wing=spanwise_discretisation_wing,
-             panels_jet=spanwise_discretisation_propeller)
+            spanwise_discretisation_wing: int, spanwise_discretisation_propeller: int):
+    # This function currently assumes that no wing-tip propellers are configured!
 
+    y_vlm = np.array([-span/2], order='F')
+    
+    nr_wing_regions = nr_props+1
+    wing_panels_regional = int(spanwise_discretisation_wing/nr_wing_regions)
+    
+    for iprop in range(nr_props):
+        start = y_vlm[-1]
+        iprop_loc = prop_locations[iprop]
+        prop_left = iprop_loc-max(prop_radii[iprop])
+        prop_right = iprop_loc+max(prop_radii[iprop])
+        
+        new_mesh = np.linspace(start, prop_left, wing_panels_regional)
+        new_mesh = np.concatenate((new_mesh[1:-1],
+                                  np.linspace(prop_left, prop_right, spanwise_discretisation_propeller))
+                                  )
+        
+        y_vlm = np.concatenate((y_vlm, new_mesh))
+
+    new_mesh = np.linspace(prop_right, span/2, wing_panels_regional)
+    y_vlm = np.concatenate((y_vlm, new_mesh[1:]))
+    
     nx = 2  # number of chordwise nodal points (should be odd)
+    ny = len(y_vlm)
     # number of spanwise nodal points for the outboard segment
 
     mesh = np.zeros((nx, ny, 3), order='F')
