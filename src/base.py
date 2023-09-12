@@ -132,6 +132,8 @@ class WingPropInfo:
                 "root_chord": self.wing.chord[0],
                 "num_twist_cp": num_cp
                 }
+            
+            self.vlm_mesh = generate_mesh(mesh_dict)
         
         self.vlm_mesh_control_points = np.zeros(
             self.spanwise_discretisation_nodes-1, order='F')

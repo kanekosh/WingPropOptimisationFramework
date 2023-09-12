@@ -29,16 +29,16 @@ M = data['M']
 
 J = 1.0 # advance ratio
 
-wing_twist = 0.
+wing_twist = .0
 wing_chord = 0.24
-wingspan = 0.73*2.*0.952
+wingspan = 0.748*2 #0.73*2.*0.952
 
 prop_refinement = 4
 
 spanwise_discretisation_propeller_BEM = len(span)
 
 
-PROWIM_parameters = ParamInfo(vinf=40.,
+PROWIM_parameters = ParamInfo(  vinf=40.,
                                 wing_aoa=2., # TODO: this is a wing property
                                 mach_number=0.2,
                                 reynolds_number=3_500_000,
@@ -83,18 +83,18 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
                 thickness = np.ones(3)*0.01,
-                chord=np.ones(7,
+                chord=np.ones(5,
                               order='F')*wing_chord,
-                twist=np.ones(7,
+                twist=np.ones(5,
                               order='F')*wing_twist,
-                empty_weight=0.,
+                empty_weight=10.,
                 CL0 = 0.283,
-                fuel_mass=10
+                fuel_mass=0
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=15,
-                                    spanwise_discretisation_propeller=9,
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=25,
+                                    spanwise_discretisation_propeller=5,
                                     spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                                     propeller=[PROWIM_prop_1, PROWIM_prop_2],
                                     wing=PROWIM_wing,

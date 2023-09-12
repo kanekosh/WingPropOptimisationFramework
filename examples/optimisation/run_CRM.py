@@ -19,9 +19,8 @@ mesh_dict = {
                 "num_x": 2,
                 "wing_type": "rect",
                 "symmetry": False,
-                "span": 0.748*2,
+                "span": .748*2,
                 "root_chord": 0.24,
-                "num_twist_cp": num_cp
             }
 
 # mesh = PROWIM_wingpropinfo.vlm_mesh
@@ -47,7 +46,7 @@ surface = {
     # obtained from aerodynamic analysis of the surface to get
     # the total CL and CD.
     # These CL0 and CD0 values do not vary wrt alpha.
-    "CL0": 0.0,  # CL of the surface at alpha=0
+    "CL0": 0.,  # CL of the surface at alpha=0
     "CD0": 0.015,  # CD of the surface at alpha=0
     # Airfoil properties for viscous drag calculation
     "k_lam": 0.05,  # percentage of chord with laminar
@@ -132,8 +131,8 @@ prob.model.connect('fuel_mass',
 prob.model.connect('fuel_mass',
                         'AS_point_0.total_perf.CG.fuelburn')
 
-prob.model.connect('chord',
-                     'wing.geometry.chord_cp')
+# prob.model.connect('chord',
+#                      'wing.geometry.chord_cp')
 
 com_name = point_name + "." + name + "_perf"
 prob.model.connect(name + ".local_stiff_transformed", point_name + ".coupled." + name + ".local_stiff_transformed")
@@ -155,6 +154,11 @@ prob.driver.options["optimizer"] = "SNOPT"
 prob.driver.options["debug_print"] = ['desvars', 'nl_cons', 'objs']
 prob.driver.opt_settings = {
 #     "Major iterations limit": 2,
+    "Major feasibility tolerance": 1.0e-8,
+    "Major optimality tolerance": 1.0e-8,
+    "Minor feasibility tolerance": 1.0e-8,
+    "Verify level": -1,
+    "Function precision": 1.0e-6,
 }
 
 recorder = om.SqliteRecorder("aerostruct.db")
@@ -184,7 +188,6 @@ prob.run_model()
 print(prob["AS_point_0.L_equals_W"])
 print(prob["AS_point_0.total_perf.L"])
 om.n2(prob, outfile='run_CRM.html')
-quit()
 
 twist_0 = prob["wing.geometry.twist"][0].copy()
 chord_0 = prob["wing.geometry.chord"][0].copy()

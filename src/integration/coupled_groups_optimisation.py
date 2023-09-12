@@ -47,7 +47,7 @@ class WingSlipstreamPropOptimisation(om.Group):
             self.add_subsystem(f'HELIX_{propeller_nr}',
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
                                                      PropInfo=wingpropinfo.propeller[propeller_nr]))
-            
+
             # Connections are given here for readability
             self.connect(f"DESIGNVARIABLES.rotor_{propeller_nr}_chord",
                          f"blade_chord_spline_{propeller_nr}.ctl_pts")
@@ -218,12 +218,10 @@ class WingOptimisation(om.Group):
 
         # === Connections ===
         # DVs to OPENAEROSTRUCT
-        # self.connect('DESIGNVARIABLES.twist',
-        #              'OPENAEROSTRUCT.wing.twist_cp')
-        # self.connect('DESIGNVARIABLES.chord',
-        #              'OPENAEROSTRUCT.wing.geometry.chord_cp')
-        # self.connect('DESIGNVARIABLES.span',
-        #              'OPENAEROSTRUCT.wing.geometry.span')
+        self.connect('DESIGNVARIABLES.twist',
+                     'OPENAEROSTRUCT.wing.twist_cp')
+        self.connect('DESIGNVARIABLES.chord',
+                     'OPENAEROSTRUCT.wing.geometry.chord_cp')
 
         # PARAMETERS to OPENAEROSTRUCT
         self.connect('PARAMETERS.vinf',
@@ -307,9 +305,9 @@ class PropOptimisation(om.Group):
     def setup(self):
         # === Options ===
         wingpropinfo = self.options['WingPropInfo']
-        
-        self.blade_nDVSec = 20 # TODO: magic number
-        
+
+        self.blade_nDVSec = 20  # TODO: magic number
+
         # === Modules ===
         self.add_subsystem('DESIGNVARIABLES', subsys=DesignVariables(
             WingPropInfo=wingpropinfo))
@@ -318,9 +316,9 @@ class PropOptimisation(om.Group):
             self.add_subsystem(
                 f"blade_chord_spline_{propeller_nr}",
                 bspline_interpolant(
-                    s=np.linspace(0, 1, self.blade_nDVSec), 
-                    x=np.linspace(0, 1, 20), 
-                    order=3, 
+                    s=np.linspace(0, 1, self.blade_nDVSec),
+                    x=np.linspace(0, 1, 20),
+                    order=3,
                     deriv_1=False, deriv_2=True
                 ),
             )
@@ -328,8 +326,8 @@ class PropOptimisation(om.Group):
             self.add_subsystem(f'HELIX_{propeller_nr}',
                                subsys=PropellerModel(ParamInfo=wingpropinfo.parameters,
                                                      PropInfo=wingpropinfo.propeller[propeller_nr]))
-            
-            # Connections are given here for readability            
+
+            # Connections are given here for readability
             self.connect(f"DESIGNVARIABLES.rotor_{propeller_nr}_chord",
                          f"blade_chord_spline_{propeller_nr}.ctl_pts")
             self.connect(f"blade_chord_spline_{propeller_nr}.y",
@@ -360,7 +358,7 @@ class PropOptimisation(om.Group):
                                 upper=design_vars[design_var_key]['ub'],
                                 scaler=design_vars[design_var_key]['scaler'])
             if 'chord' in design_var_key:
-                chord_included=True
+                chord_included = True
 
         # === Add constraints ===
         for constraints_key in constraints.keys():
@@ -381,11 +379,12 @@ class PropOptimisation(om.Group):
                                         lower=constraints[constraints_key]['lower'],
                                         upper=constraints[constraints_key]['upper'])
                     break  # TODO: there's a better way to solve this issue
-                
+
         # === Additional non-adjustable constraints ===
         if chord_included:
             for propeller_nr, _ in enumerate(wingpropinfo.propeller):
-                self.add_constraint(f"blade_chord_spline_{propeller_nr}.d2y", upper=0.0)
+                self.add_constraint(
+                    f"blade_chord_spline_{propeller_nr}.d2y", upper=0.0)
                 self.add_constraint(
                     f"blade_chord_spline_{propeller_nr}.y", equals=wingpropinfo.propeller[propeller_nr].chord[0], indices=[0], scaler=100.0, alias="chord_root"
                 )

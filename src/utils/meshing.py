@@ -16,6 +16,16 @@ def meshing(span: float, chord: float, prop_locations: np.array, prop_radii: np.
     nr_wing_regions = nr_props+1
     wing_panels_regional = int(spanwise_discretisation_wing/nr_wing_regions)
     
+    # Check whether ny is odd
+    ny = wing_panels_regional*(nr_props+1)+spanwise_discretisation_propeller*nr_props
+    
+    if ny%2==0:
+        wing_panels_regional+=1
+    
+    # Update ny
+    ny = wing_panels_regional*(nr_props+1)+spanwise_discretisation_propeller*nr_props    
+    assert(ny%2==1), 'ny should be odd number'
+    
     for iprop in range(nr_props):
         start = y_vlm[-1]
         iprop_loc = prop_locations[iprop]

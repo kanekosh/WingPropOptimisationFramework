@@ -27,13 +27,13 @@ if __name__ == '__main__':
     #           savedir=savepath)
     # quit()
 
-    # PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
-    # PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
+    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
     # PROWIM_wingpropinfo.wing.span = 0.748*2
-    # PROWIM_wingpropinfo.linear_mesh = True
+    # PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
     
-    # PROWIM_wingpropinfo.__post_init__()
+    PROWIM_wingpropinfo.__post_init__()
     
     objective = {
                 'OPENAEROSTRUCT.AS_point_0.wing_perf.CD':
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 1e-2,
                         'ub': 5e-1,
-                        'scaler': 1e2},
+                        'scaler': 1e2}
                     }
 
     constraints = {
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
     "Major feasibility tolerance": 1.0e-8,
-    "Major optimality tolerance": 1.0e-8,
+    "Major optimality tolerance": 1.0e-10,
     "Minor feasibility tolerance": 1.0e-8,
     "Verify level": -1,
     "Function precision": 1.0e-6,
