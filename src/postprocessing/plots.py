@@ -45,6 +45,7 @@ def all_plots(db_name: str,
 
     # === Misc variables ===
     spanwise_mesh = wingpropinfo.vlm_mesh_control_points
+    vlm_mesh = wingpropinfo.vlm_mesh[0, :, 1]
     try:
         for misckey in first_case.outputs.keys():
             if 'velocity_distribution' in misckey:
@@ -74,14 +75,29 @@ def all_plots(db_name: str,
                 except:
                     chord_nodes_orig = np.ones(len(Cl_wing_opt))
                     chord_nodes_opt = np.ones(len(Cl_wing_opt))
+                    
+                Clc_wing_orig = Cl_wing_orig*chord_nodes_orig
+                Clc_wing_opt = Cl_wing_opt*chord_nodes_opt
+                
+                Area_ell = 2*sum(Clc_wing_opt*(vlm_mesh[1:]-vlm_mesh[:-1]))
+                a = span
+                b = Area_ell/(np.pi*a/2)
+                
+                m_vals = wingpropinfo.vlm_mesh
+                span = m_vals[0, :, 1] / (m_vals[0, -1, 1] - m_vals[0, 0, 1])
+                span = span - (span[0] + 0.5)
+                lift_area = np.sum(Clc_wing_opt * (span[1:] - span[:-1]))
+                span_ctr_pnts = np.array([0.5*(span[index]+span[index+1]) for index in range(len(span)-1)])
+                lift_ell = 4 * lift_area / np.pi * np.sqrt(1 - (2 * span_ctr_pnts) ** 2)
 
                 # === Plotting misc variables ===
                 var_x = np.linspace(-span/2, span/2, len(Cl_wing_orig))
                 optimisation_result_plot(design_variable_array=spanwise_mesh,
-                                         original=Cl_wing_orig*chord_nodes_orig,
-                                         optimised=Cl_wing_opt*chord_nodes_opt,
+                                         original=Clc_wing_orig,
+                                         optimised=Clc_wing_opt,
                                          label=r"$C_l \cdot c$", xlabel=r'Wing spanwise location', ylabel=r"Lift coefficient, $C_l \cdot c$",
-                                         savepath=os.path.join(savedir, f'Cl_Wing'))
+                                         savepath=os.path.join(savedir, f'Cl_Wing'),
+                                         lift_ell=lift_ell)
 
             elif 'wing.geometry.twist' in misckey:
                 twist_orig = first_case.outputs[misckey][0]
@@ -94,8 +110,8 @@ def all_plots(db_name: str,
                                          savepath=os.path.join(savedir, f'Wing_twist_DV'))
                 
             elif misckey=='OPENAEROSTRUCT.wing.geometry.chord':
-                chord_orig = first_case.outputs[misckey][0]
-                chord_opt = last_case.outputs[misckey][0]
+                chord_orig = first_case.outputs[misckey][0]*wingpropinfo.wing.chord[0]
+                chord_opt = last_case.outputs[misckey][0]*wingpropinfo.wing.chord[0]
 
                 # === Plotting misc variables ===
                 var_x = wingpropinfo.vlm_mesh[0, :, 1]
@@ -219,7 +235,7 @@ def scatter_plots(db_name: str,
 
 def optimisation_result_plot(design_variable_array: np.array, original: np.array, optimised: np.array,
                              label: str, xlabel: str, ylabel: str,
-                             savepath: str) -> None:
+                             savepath: str, **kwargs) -> None:
     colors = get_niceColors()
     delftcolors = get_delftColors()
     supernicecolors = get_SuperNiceColors()
@@ -233,6 +249,10 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
             label=f'{label}, original', color='Orange')
     ax.plot(spanwise, optimised,
             label=f'{label}, optimised', color='b', linestyle='dashed')
+    
+    for plot in kwargs.values():
+        ax.plot(spanwise, plot,
+            label='Elliptical lift curve', color='black', linestyle='dashed', linewidth=1.)
 
     # ax.plot([0.332-0.12, 0.332-0.12], [0., 0.25], color=delftcolors['Grey'], linewidth=0.5)
     # ax.plot([0.332+0.12, 0.332+0.12], [0., 0.25], color=delftcolors['Grey'], linewidth=0.5)
@@ -245,13 +265,13 @@ def optimisation_result_plot(design_variable_array: np.array, original: np.array
     ax.set_xlabel(xlabel, fontweight='ultralight')
     ax.set_ylabel(ylabel, fontweight='ultralight')
 
-    # ax.set_ylim((
-    #     min(min(original), min(optimised))*1/margin,
-    #     max(max(original), max(optimised))*margin)
-    # )
+    ax.set_ylim((
+        np.min([min(original), np.min(optimised)])*1/margin,
+        np.max([max(original), np.max(optimised)])*margin)
+    )
     ax.set_xlim((
-        min(spanwise)*margin,
-        max(spanwise)*margin)
+        np.min(spanwise)*margin,
+        np.max(spanwise)*margin)
     )
     ax.legend()
     niceplots.adjust_spines(ax, outward=True)

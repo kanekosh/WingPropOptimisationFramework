@@ -20,15 +20,16 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
     # === Plotting ===
-    savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
-    all_plots(db_name=db_name,
-              wingpropinfo=PROWIM_wingpropinfo,
-              savedir=savepath)
+    db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
+    # savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
+    # all_plots(db_name=db_name,
+    #           wingpropinfo=PROWIM_wingpropinfo,
+    #           savedir=savepath)
 
-    PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
-    PROWIM_wingpropinfo.wing.span = 3 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    # PROWIM_wingpropinfo.wing.span = 0.748*2
     # for index in range(len(PROWIM_wingpropinfo.propeller)):
     #     PROWIM_wingpropinfo.propeller[index].rot_rate = 644.82864419
         # PROWIM_wingpropinfo.propeller[index].twist = np.array([67.79378385, 71.83797648, 61.32955902, 62.9787903,  56.87134101, 58.16629045,
@@ -39,6 +40,7 @@ if __name__ == '__main__':
         #                                                     )
     
     PROWIM_wingpropinfo.__post_init__()
+    
     objective = {
                 'HELIX_COUPLED.power_total':
                     {'scaler': 1/433.04277037}
@@ -63,23 +65,23 @@ if __name__ == '__main__':
                         'scaler': 1./10},
                     'DESIGNVARIABLES.twist':
                         {'lb': -10,
-                        'ub': 10,
+                        'ub': 8,
                         'scaler': 1},
                     'DESIGNVARIABLES.chord':
-                        {'lb': 1e-2,
-                        'ub': 1,
-                        'scaler': 1e3},
+                        {'lb': 0,
+                        'ub': 3,
+                        'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-3,
+                        {'lb': 3e-3,
                         'ub': 5e-1,
-                        'scaler': 1e3},
+                        'scaler': 1e2},
                     }
 
     constraints = {
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
-                    'OPENAEROSTRUCT.wing.structural_mass':
-                        {'lower': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.CL':
+                        {'upper': 1.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.L_equals_W':
@@ -125,8 +127,8 @@ if __name__ == '__main__':
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
-        "Major feasibility tolerance": 1.0e-8,
-        "Major optimality tolerance": 1.0e-8,
+        "Major feasibility tolerance": 1.0e-9,
+        "Major optimality tolerance": 1.0e-9,
         "Minor feasibility tolerance": 1.0e-8,
         "Verify level": -1,
         "Function precision": 1.0e-6,

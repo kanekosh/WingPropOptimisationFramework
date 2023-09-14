@@ -27,31 +27,31 @@ if __name__ == '__main__':
     #           savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 0 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
-    # PROWIM_wingpropinfo.wing.span = 0.748*2
+    # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
+    # PROWIM_wingpropinfo.wing.span = 0.748*2.5
     # PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
     
     PROWIM_wingpropinfo.__post_init__()
     
     objective = {
-                'OPENAEROSTRUCT.AS_point_0.wing_perf.CD':
-                    {'scaler': 1/0.0293542}
+                'OPENAEROSTRUCT.AS_point_0.total_perf.D':
+                    {'scaler': 1/9.81879759}
                 }
 
     design_vars = {
                     'OPENAEROSTRUCT.wing.twist_cp':
                         {'lb': -10,
-                        'ub': 15,
+                        'ub': 10,
                         'scaler': 1},
                     'OPENAEROSTRUCT.wing.geometry.chord_cp':
-                        {'lb': 0.0,
+                        {'lb': 0.01,
                         'ub': 30,
-                        'scaler': 1},
+                        'scaler': 10},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-2,
-                        'ub': 5e-1,
+                        {'lb': 1e-3,
+                        'ub': 2e-1,
                         'scaler': 1e2}
                     }
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     recorder = om.SqliteRecorder(db_name)
     prob.driver.add_recorder(recorder)
     prob.driver.add_recorder(recorder)
-    prob.driver.recording_options['includes'] = [   
+    prob.driver.recording_options['includes'] = [   "*",
                                                     "OPENAEROSTRUCT.wing.mesh",
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
                                                     "OPENAEROSTRUCT.wing.geometry.chord",

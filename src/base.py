@@ -115,7 +115,7 @@ class WingPropInfo:
                                 prop_radii=self.prop_radii,
                                 nr_props=self.nr_props,
                                 spanwise_discretisation_wing=self.spanwise_discretisation_wing,
-                                spanwise_discretisation_propeller=self.spanwise_discretisation_propeller)
+                                spanwise_panels_propeller=self.spanwise_discretisation_propeller)
         
         self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
         

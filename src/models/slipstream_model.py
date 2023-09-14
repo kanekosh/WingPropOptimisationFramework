@@ -4,6 +4,7 @@
 from src.base import WingPropInfo
 from rethorst.openmdao.om_rethorst_velocityinterpolation import RETHORST_velocityinterpolation
 from rethorst.openmdao.om_rethorst_correctionmatrix import RETHORST_correction
+from tubemodel.openmdao.om_tubemodel_coupled import TUBEMODEL_coupled
 
 # --- External ---
 import openmdao.api as om
@@ -40,3 +41,6 @@ class SlipStreamModel(om.Group):
                                             'propeller_velocity'],
                            promotes_outputs=['correction_matrix',
                                              'velocity_distribution'])
+        
+        self.add_subsystem('tubemodel',
+                           subsys=TUBEMODEL_coupled)

@@ -17,22 +17,7 @@ class Parameters(om.IndepVarComp):
         wingpropinfo = self.options['WingPropInfo']
 
         # === Outputs ===
-        # Freestream Parameters        
-        # self.add_output("fuel_mass", 
-        #                   val=0., units="kg") 
-        # self.add_output("vinf", val=40, units="m/s")
-        # self.add_output("velocity_distribution", 
-        #                         val=np.ones(28)*40, units="m/s") 
-        # self.add_output("alpha", val=2.0, units="deg")
-        # self.add_output("Mach_number", val=0.2)
-        # self.add_output("re", val=3.4e6, units="1/m")
-        # self.add_output("rho", val=1.225, units="kg/m**3")
-        # self.add_output("CT", val= 0, units="1/s")
-        # self.add_output("R", val=0, units="m")
-        # self.add_output("W0", val=10, units="kg")
-        # self.add_output("speed_of_sound", val=333.4, units="m/s")
-        # self.add_output("load_factor", val=1.0)
-        # self.add_output("empty_cg", val=np.zeros((3)), units="m")
+        # Freestream Parameters
 
         self.add_output("vinf", val=wingpropinfo.parameters.vinf, units="m/s")
         self.add_output("velocity_distribution", val=wingpropinfo.velocity_distribution_nopropeller, units="m/s")

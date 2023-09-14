@@ -82,19 +82,19 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                thickness = np.ones(3)*0.01,
-                chord=np.ones(5,
+                thickness = np.ones(10)*0.01,
+                chord=np.ones(10,
                               order='F')*wing_chord,
-                twist=np.ones(5,
+                twist=np.ones(10,
                               order='F')*wing_twist,
                 empty_weight=10.,
-                CL0 = 0.283,
+                CL0 = 0.283, # if you want to do optimization set this to zero bcs otherwise OAS will return erroneous results
                 fuel_mass=0
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=25,
-                                    spanwise_discretisation_propeller=5,
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=39,
+                                    spanwise_discretisation_propeller=17,
                                     spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                                     propeller=[PROWIM_prop_1, PROWIM_prop_2],
                                     wing=PROWIM_wing,
