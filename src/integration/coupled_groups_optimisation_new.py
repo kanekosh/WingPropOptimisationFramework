@@ -73,14 +73,17 @@ class WingSlipstreamPropOptimisation(om.Group):
                                         subsys=WingModelTube(WingPropInfo=wingpropinfo))
 
         coupled_OAS_TUBE.add_subsystem('TUBEMODEL',
-                                        subsys=SliptreamTube(   propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
-                                                                propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
-                                                                propeller_quantity=len(wingpropinfo.propeller),
+                                        subsys=SliptreamTube(   propeller_quantity=len(wingpropinfo.propeller),
+                                                                prop_rotation=[wingpropinfo.propeller[index].rotation_direction for index in range(len(wingpropinfo.propeller))],
                                                                 nr_blades=[wingpropinfo.propeller[index].nr_blades for index in range(len(wingpropinfo.propeller))],
                                                                 prop_angle=[wingpropinfo.propeller[index].prop_angle for index in range(len(wingpropinfo.propeller))],
                                                                 prop_location=[wingpropinfo.propeller[index].prop_location for index in range(len(wingpropinfo.propeller))],
                                                                 propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
                                                                 propeller_local_refinement=wingpropinfo.propeller[0].local_refinement,
+                                                                gamma_tangential_dx=wingpropinfo.gamma_tangential_dx,
+                                                                gamma_tangential_x=wingpropinfo.gamma_tangential_x,
+                                                                propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
+                                                                propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
                                                                 mesh=wingpropinfo.vlm_mesh,))
         
         coupled_OAS_TUBE.nonlinear_solver = om.NonlinearBlockGS(use_aitken=True)
