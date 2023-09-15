@@ -17,8 +17,8 @@ class ParamInfo:
     mach_number: float
     reynolds_number: float
     speed_of_sound: float
-    R: float = 11.165e6
-    CT: float = grav_constant * 17.0e-6
+    R: float = 0 # we fly electric
+    CT: float = 0 # grav_constant * 17.0e-6
     air_density: float = 1.225
 
 
@@ -42,6 +42,7 @@ class WingInfo:
     load_factor: float = 1.
     empty_cg: np.array = np.zeros((3))
     CL0: float = 0.
+    fuel_mass: float = 0. # we fly eletric
 
 
 @dataclass
@@ -55,6 +56,7 @@ class PropInfo:
     twist: np.array
     span: np.array
     airfoils: list[AirfoilInfo]
+    prop_angle: float = 0.
 
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])
@@ -92,14 +94,17 @@ class WingPropInfo:
     NO_CORRECTION: bool = False # set this to true if you want to run the system without a correction factor
     NO_PROPELLER: bool = False # Set this to true to run system without propeller or correction
     
+    linear_mesh: bool = False
+    
+    # Parameters for tube model
+    gamma_tangential_dx: float = 0.1
+    gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
+    
     if NO_PROPELLER:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
     def __post_init__(self):
         self.nr_props = len(self.propeller)
-        self.spanwise_discretisation_nodes = self.spanwise_discretisation_wing + \
-            self.nr_props*self.spanwise_discretisation_propeller + 1
-
         self.prop_locations = np.zeros((self.nr_props), order='F')
         self.prop_radii = np.zeros(
             (self.nr_props, self.spanwise_discretisation_propeller_BEM+1), order='F')
@@ -115,9 +120,32 @@ class WingPropInfo:
                                 prop_radii=self.prop_radii,
                                 nr_props=self.nr_props,
                                 spanwise_discretisation_wing=self.spanwise_discretisation_wing,
-                                spanwise_discretisation_propeller=self.spanwise_discretisation_propeller,
-                                total_nodes=self.spanwise_discretisation_nodes)
-
+                                spanwise_panels_propeller=self.spanwise_discretisation_propeller)
+        
+        self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
+        
+        wing_spacing = (self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/self.spanwise_discretisation_wing
+        prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller
+        
+        print('PROP VERSUS WING SPACING: ', wing_spacing/prop_spacing, ' PLEASE MAKE SURE THIS VLAUE IS CLOSE TO 1.0 FOR BEST RESULTS')
+        assert (wing_spacing/prop_spacing>0.95 and wing_spacing/prop_spacing<1.05), 'DISCREPANCY BETWEEN WING AND PROP SPACING TOO LARGE'        
+        
+        # TODO: fix this class, it looks pretty terrible rn
+        if self.linear_mesh:
+            from openaerostruct.geometry.utils import generate_mesh
+            
+            num_cp = len(self.wing.twist)
+            mesh_dict = {"num_y": self.spanwise_discretisation_nodes,
+                "num_x": 2,
+                "wing_type": "rect",
+                "symmetry": False,
+                "span": self.wing.span,
+                "root_chord": self.wing.chord[0],
+                "num_twist_cp": num_cp
+                }
+            
+            self.vlm_mesh = generate_mesh(mesh_dict)
+        
         self.vlm_mesh_control_points = np.zeros(
             self.spanwise_discretisation_nodes-1, order='F')
 

@@ -1,14 +1,16 @@
 # --- Built-ins ---
 
 # --- Internal ---
-from src.base import WingPropInfo, PropInfo, ParamInfo
+from src.base import WingPropInfo
 from src.models.propeller_model import PropellerModel, PropellerCoupled
-from src.models.wing_model import WingModelTube, WingModelWingBox
-from src.models.slipstream_model import SlipStreamModel
+from src.models.wing_model import WingModelTube
 from src.models.parameters import Parameters
 from src.models.design_variables import DesignVariables
 from src.constraints.constraints import ConstraintsThrustDrag
 from src.utils.optUtils import bspline_interpolant
+
+from slipstream.slipstream_rethorst import SlipstreamRethorst
+from slipstream.slipstream_tube import SliptreamTube
 
 # --- External ---
 import numpy as np
@@ -55,15 +57,51 @@ class WingSlipstreamPropOptimisation(om.Group):
                          f"HELIX_{propeller_nr}.om_helix.geodef_parametric_0_chord")
 
         self.add_subsystem('RETHORST',
-                           subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
+                           subsys=SlipstreamRethorst(   propeller_quantity=len(wingpropinfo.propeller),
+                                                        propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
+                                                        propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
+                                                        propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
+                                                        propeller_local_refinement=wingpropinfo.propeller[0].local_refinement,
+                                                        NO_CORRECTION=wingpropinfo.NO_CORRECTION,
+                                                        NO_PROPELLER=wingpropinfo.NO_PROPELLER,
+                                                        mesh=wingpropinfo.vlm_mesh,))
 
-        self.add_subsystem('OPENAEROSTRUCT',
-                           subsys=WingModelTube(WingPropInfo=wingpropinfo))
+        # Coupled group
+        coupled_OAS_TUBE = om.Group()
+        
+        coupled_OAS_TUBE.add_subsystem('OPENAEROSTRUCT',
+                                        subsys=WingModelTube(WingPropInfo=wingpropinfo))
 
+        coupled_OAS_TUBE.add_subsystem('TUBEMODEL',
+                                        subsys=SliptreamTube(   propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
+                                                                propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
+                                                                propeller_quantity=len(wingpropinfo.propeller),
+                                                                nr_blades=[wingpropinfo.propeller[index].nr_blades for index in range(len(wingpropinfo.propeller))],
+                                                                prop_angle=[wingpropinfo.propeller[index].prop_angle for index in range(len(wingpropinfo.propeller))],
+                                                                prop_location=[wingpropinfo.propeller[index].prop_location for index in range(len(wingpropinfo.propeller))],
+                                                                propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
+                                                                propeller_local_refinement=wingpropinfo.propeller[0].local_refinement,
+                                                                mesh=wingpropinfo.vlm_mesh,))
+        
+        coupled_OAS_TUBE.nonlinear_solver = om.NonlinearBlockGS(use_aitken=True)
+        coupled_OAS_TUBE.nonlinear_solver.options["maxiter"] = 100
+        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-7
+        coupled_OAS_TUBE.nonlinear_solver.options["rtol"] = 1e-30
+        coupled_OAS_TUBE.nonlinear_solver.options["iprint"] = 2
+        coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = True
+
+        coupled_OAS_TUBE.linear_solver = om.DirectSolver(assemble_jac=True)
+        coupled_OAS_TUBE.options["assembled_jac_type"] = "csc"
+        
+        self.add_subsystem('COUPLED_OAS_TUBE',
+                           subsys=coupled_OAS_TUBE,
+                           promotes_inputs=['*'],
+                           promotes_outputs=['*'])
+
+        # Outputs
         self.add_subsystem('HELIX_COUPLED',
                            subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
 
-        # Outputs
         self.add_subsystem('CONSTRAINTS',
                            subsys=ConstraintsThrustDrag())
 
@@ -112,7 +150,23 @@ class WingSlipstreamPropOptimisation(om.Group):
                      'OPENAEROSTRUCT.AS_point_0.total_perf.L_equals_W.fuelburn')
         self.connect('PARAMETERS.fuel_mass',
                      'OPENAEROSTRUCT.AS_point_0.total_perf.CG.fuelburn')
+        
+        # PARAMS to TUBEMODEL
+        for index, _ in enumerate(wingpropinfo.propeller):
+            self.connect("PARAMETERS.vinf",
+                        f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_{index}.vinf")
+            self.connect("PARAMETERS.vinf",
+                        f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_{index}.vinf")
+            self.connect("PARAMETERS.rho",
+                        f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_{index}.rhoinf")
 
+        # DVs to TUBEMODEL
+        for index, _ in enumerate(wingpropinfo.propeller):
+            self.connect(f"DESIGNVARIABLES.rotor_{index}_rot_rate",
+                         f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_{index}.propeller_omega")
+            self.connect(f"DESIGNVARIABLES.rotor_{index}_rot_rate",
+                         f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_{index}.propeller_omega")
+        
         # DVs to HELIX
         for index, _ in enumerate(wingpropinfo.propeller):
             self.connect(f"DESIGNVARIABLES.rotor_{index}_twist",
@@ -125,15 +179,19 @@ class WingSlipstreamPropOptimisation(om.Group):
                      'OPENAEROSTRUCT.wing.twist_cp')
         self.connect('DESIGNVARIABLES.chord',
                      'OPENAEROSTRUCT.wing.geometry.chord_cp')
-        # self.connect('DESIGNVARIABLES.span',
-        #              'OPENAEROSTRUCT.wing.geometry.span')
 
         # HELIX to RETHORST
         for index in range(wingpropinfo.nr_props):
+            # Rethorst
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
                          f"RETHORST.interpolation.propeller_radii_BEM_rotor{index}")
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_velocity_distribution",
                          f"RETHORST.interpolation.propeller_velocity_BEM_rotor{index}")
+            # Tube model
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
+                         f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_radii_BEM_rotor0")
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_f_a",
+                         f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_force_BEM_rotor0")
 
         # HELIX to HELIX_COUPLED
         for index in range(wingpropinfo.nr_props):
@@ -148,6 +206,15 @@ class WingSlipstreamPropOptimisation(om.Group):
         self.connect("RETHORST.correction_matrix",
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.rethorst_correction")
 
+        # OPENAEROSTRUCT to TUBEMODEL
+        for index in range(wingpropinfo.nr_props):
+            self.connect('OPENAEROSTRUCT.AS_point_0.coupled.aero_states.coll_pts',
+                        f'TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_biotsavart_{index}.collocation_points')
+        
+        # TUBEMODEL to OPENAEROSTRUCT
+        self.connect('TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector',
+                     'OPENAEROSTRUCT.AS_point_0.coupled.aero_states.induced_velocity_vector')
+        
         # OPENAEROSTRUCT to CONSTRAINTS
         self.connect('OPENAEROSTRUCT.AS_point_0.total_perf.D',
                      'CONSTRAINTS.drag_total')

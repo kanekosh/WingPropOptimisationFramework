@@ -50,17 +50,17 @@ body {
   }
   
   .home-item-1::before {
-    background-image: url('figures/propeller.png');
+    background-image: url('figures/propeller.jpg');
     /* filter: grayscale(50%); Apply a grayscale filter */
   }
   
   .home-item-2::before {
-    background-image: url('figures/wing.png');
+    background-image: url('figures/wing.jpeg');
     /* filter: grayscale(50%); Apply a grayscale filter */
   }
   
   .home-item-3::before {
-    background-image: url('figures/wingprop.png');
+    background-image: url('figures/wingprop.jpeg');
     /* filter: opacity(50%); Apply a grayscale filter */
   }
   

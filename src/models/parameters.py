@@ -18,6 +18,7 @@ class Parameters(om.IndepVarComp):
 
         # === Outputs ===
         # Freestream Parameters
+
         self.add_output("vinf", val=wingpropinfo.parameters.vinf, units="m/s")
         self.add_output("velocity_distribution", val=wingpropinfo.velocity_distribution_nopropeller, units="m/s")
         self.add_output("alpha", val=wingpropinfo.parameters.wing_aoa, units="deg")
@@ -33,6 +34,7 @@ class Parameters(om.IndepVarComp):
                         val=wingpropinfo.parameters.speed_of_sound, units="m/s")
         self.add_output("load_factor", val=wingpropinfo.wing.load_factor)
         self.add_output("empty_cg", val=wingpropinfo.wing.empty_cg, units="m")
+        self.add_output("fuel_mass", val=wingpropinfo.wing.fuel_mass, units="kg")
         
         # Propeller Parameters
         for index, _ in enumerate(wingpropinfo.propeller):
@@ -42,6 +44,8 @@ class Parameters(om.IndepVarComp):
                         val=wingpropinfo.prop_locations, units="m")
         self.add_output("propeller_radii",
                         val=wingpropinfo.prop_radii, units="m")
+        
+        # Mesh parameters
         self.add_output("wing_mesh", val=wingpropinfo.vlm_mesh, units="m")
         self.add_output("wing_mesh_control_points",
                         val=wingpropinfo.vlm_mesh_control_points, units="m")

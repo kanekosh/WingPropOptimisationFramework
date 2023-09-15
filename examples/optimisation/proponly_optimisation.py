@@ -6,7 +6,7 @@ import copy
 
 # --- Internal ---
 from src.utils.tools import print_results
-from src.postprocessing.plots import all_plots
+from src.postprocessing.plots import all_plots, stackedplots_prop
 from src.integration.coupled_groups_optimisation import PropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo, PROWIM_prop_1, PROWIM_parameters
 
@@ -24,10 +24,17 @@ if __name__=='__main__':
     PROWIM_wingpropinfo.propeller[0].rot_rate = 249 * 2.0 * np.pi
     PROWIM_wingpropinfo.parameters.vinf = 50
     PROWIM_wingpropinfo.parameters.air_density = 1.2087
+
+    db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
+    savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
+    stackedplots_prop(db_name=db_name,
+                        wingpropinfo=PROWIM_wingpropinfo,
+                        savedir=savepath)
+    quit()
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/509.77978858}
+                    {'scaler': 1/1313.13086606}
                 }
 
     design_vars = {
@@ -38,16 +45,16 @@ if __name__=='__main__':
                     'HELIX_0.om_helix.geodef_parametric_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060.4532164},
-                    'DESIGNVARIABLES.rotor_0_chord':
-                        {'lb': -np.inf,
-                        'ub': np.inf,
-                        'scaler': 1./0.012032137566147693}
+                        'scaler': 1./1564.51314149},
+                    # 'DESIGNVARIABLES.rotor_0_chord':
+                    #     {'lb': -np.inf,
+                    #     'ub': np.inf,
+                    #     'scaler': 1./0.012032137566147693}
                     }
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 8.47001072}
+                        {'equals': 22.88221742}
                     }
     
     prob = om.Problem()
@@ -61,20 +68,13 @@ if __name__=='__main__':
     
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
-    
-    print('Variables:')
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_rot_rate"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_chord"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_twist"])
-    print(prob["HELIX_0.om_helix.geodef_parametric_0_span"])
-    
-    quit()
+
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.opt_settings = {
     "Major feasibility tolerance": 1.0e-5,
-    "Major optimality tolerance": 1.0e-7,
+    "Major optimality tolerance": 1.0e-10,
     "Minor feasibility tolerance": 1.0-5,
     "Verify level": -1,
     "Function precision": 1.0e-6,
