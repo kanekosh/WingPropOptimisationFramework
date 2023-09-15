@@ -4,7 +4,12 @@ from collections import OrderedDict
 # --- Internal ---
 
 # --- External ---
+import numpy as np
 
+
+def prop_circle(r, x)->list:
+    y = np.sqrt(r**2-x**2)
+    return y[np.where(y>=0)]
 
 def get_niceColors():
     # Define an ordered dictionary of some nice Doumont style colors to use as the default color cycle
@@ -48,4 +53,3 @@ def get_SuperNiceColors():
     superniceColors["Purple"] = "#E06050"
 
     return superniceColors
-    

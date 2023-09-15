@@ -6,7 +6,7 @@ import copy
 
 # --- Internal ---
 from src.utils.tools import print_results
-from src.postprocessing.plots import all_plots
+from src.postprocessing.plots import all_plots, stackedplots_wing
 from src.integration.coupled_groups_optimisation import WingOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
@@ -22,15 +22,15 @@ if __name__ == '__main__':
     
     # db_name = os.path.join(BASE_DIR, 'results', 'data_wing.db')
     # savepath = os.path.join(BASE_DIR, 'results', 'wing_results')
-    # all_plots(db_name=db_name,
-    #           wingpropinfo=PROWIM_wingpropinfo,
-    #           savedir=savepath)
+    # stackedplots_wing(db_name=db_name,
+    #             wingpropinfo=PROWIM_wingpropinfo,
+    #             savedir=savepath)
     # quit()
 
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
-    # PROWIM_wingpropinfo.wing.span = 0.748*2.5
+    PROWIM_wingpropinfo.wing.span = 0.748*2
     # PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
     
     PROWIM_wingpropinfo.__post_init__()
@@ -43,19 +43,21 @@ if __name__ == '__main__':
     design_vars = {
                     'OPENAEROSTRUCT.wing.twist_cp':
                         {'lb': -10,
-                        'ub': 10,
+                        'ub': 8,
                         'scaler': 1},
                     'OPENAEROSTRUCT.wing.geometry.chord_cp':
                         {'lb': 0.01,
                         'ub': 30,
                         'scaler': 10},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 1e-3,
+                        {'lb': 3e-3,
                         'ub': 2e-1,
                         'scaler': 1e2}
                     }
 
     constraints = {
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.CL':
+                        {'upper': 1.},
                     'OPENAEROSTRUCT.AS_point_0.L_equals_W':
                         {'equals': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     recorder = om.SqliteRecorder(db_name)
     prob.driver.add_recorder(recorder)
     prob.driver.add_recorder(recorder)
-    prob.driver.recording_options['includes'] = [   "*",
+    prob.driver.recording_options['includes'] = [
                                                     "OPENAEROSTRUCT.wing.mesh",
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
                                                     "OPENAEROSTRUCT.wing.geometry.chord",
@@ -120,3 +122,8 @@ if __name__ == '__main__':
     all_plots(db_name=db_name,
               wingpropinfo=PROWIM_wingpropinfo,
               savedir=savepath)
+    
+    stackedplots_wing(db_name=db_name,
+                wingpropinfo=PROWIM_wingpropinfo,
+                savedir=savepath,
+                noprop=True)

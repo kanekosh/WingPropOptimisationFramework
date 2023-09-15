@@ -7,7 +7,7 @@ import copy
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_wing
-from src.integration.coupled_groups_optimisation import WingSlipstreamPropOptimisation
+from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     #             savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 15 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 7.5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
 
     PROWIM_wingpropinfo.__post_init__()
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
-                    
+    quit()
         # Check derivatives  
     if False:
         prob.check_totals(  compact_print=True, show_only_incorrect=True,

@@ -6,7 +6,7 @@ import copy
 
 # --- Internal ---
 from src.utils.tools import print_results
-from src.postprocessing.plots import all_plots
+from src.postprocessing.plots import all_plots, stackedplots_prop
 from src.integration.coupled_groups_optimisation import PropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo, PROWIM_prop_1, PROWIM_parameters
 
@@ -24,6 +24,13 @@ if __name__=='__main__':
     PROWIM_wingpropinfo.propeller[0].rot_rate = 249 * 2.0 * np.pi
     PROWIM_wingpropinfo.parameters.vinf = 50
     PROWIM_wingpropinfo.parameters.air_density = 1.2087
+
+    db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
+    savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
+    stackedplots_prop(db_name=db_name,
+                        wingpropinfo=PROWIM_wingpropinfo,
+                        savedir=savepath)
+    quit()
     
     objective = {
                 'HELIX_COUPLED.power_total':

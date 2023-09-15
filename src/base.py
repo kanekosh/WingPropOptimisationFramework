@@ -56,6 +56,7 @@ class PropInfo:
     twist: np.array
     span: np.array
     airfoils: list[AirfoilInfo]
+    prop_angle: float = 0.
 
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])
@@ -95,6 +96,10 @@ class WingPropInfo:
     
     linear_mesh: bool = False
     
+    # Parameters for tube model
+    gamma_tangential_dx: float = 0.1
+    gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
+    
     if NO_PROPELLER:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
@@ -118,6 +123,12 @@ class WingPropInfo:
                                 spanwise_panels_propeller=self.spanwise_discretisation_propeller)
         
         self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
+        
+        wing_spacing = (self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/self.spanwise_discretisation_wing
+        prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller
+        
+        print('PROP VERSUS WING SPACING: ', wing_spacing/prop_spacing, ' PLEASE MAKE SURE THIS VLAUE IS CLOSE TO 1.0 FOR BEST RESULTS')
+        assert (wing_spacing/prop_spacing>0.95 and wing_spacing/prop_spacing<1.05), 'DISCREPANCY BETWEEN WING AND PROP SPACING TOO LARGE'        
         
         # TODO: fix this class, it looks pretty terrible rn
         if self.linear_mesh:

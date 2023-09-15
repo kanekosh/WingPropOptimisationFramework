@@ -77,7 +77,7 @@ class PropellerModel(om.Group):
                 power_calc=True,
                 loads_calc=True,
                 velocity_distribution_calc=True,
-                force_distribution_calc=False,
+                force_distribution_calc=True,
             ),
         )
     
