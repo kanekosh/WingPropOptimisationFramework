@@ -49,3 +49,8 @@ class Parameters(om.IndepVarComp):
         self.add_output("wing_mesh", val=wingpropinfo.vlm_mesh, units="m")
         self.add_output("wing_mesh_control_points",
                         val=wingpropinfo.vlm_mesh_control_points, units="m")
+        
+        def parabola(x): return -x**2+1
+        
+        # Misc parameters
+        self.add_output('force_distr', val=parabola(np.linspace(-1, 1, 76)))

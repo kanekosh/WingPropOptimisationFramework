@@ -88,12 +88,12 @@ class WingSlipstreamPropOptimisation(om.Group):
         
         coupled_OAS_TUBE.nonlinear_solver = om.NonlinearBlockGS(use_aitken=True)
         coupled_OAS_TUBE.nonlinear_solver.options["maxiter"] = 100
-        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-7
+        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-4
         coupled_OAS_TUBE.nonlinear_solver.options["rtol"] = 1e-30
         coupled_OAS_TUBE.nonlinear_solver.options["iprint"] = 2
-        coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = True
+        coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = False
 
-        coupled_OAS_TUBE.linear_solver = om.DirectSolver(assemble_jac=True)
+        coupled_OAS_TUBE.linear_solver = om.NonlinearBlockGS(use_aitken=True)
         coupled_OAS_TUBE.options["assembled_jac_type"] = "csc"
         
         self.add_subsystem('COUPLED_OAS_TUBE',
@@ -183,7 +183,7 @@ class WingSlipstreamPropOptimisation(om.Group):
         self.connect('DESIGNVARIABLES.chord',
                      'OPENAEROSTRUCT.wing.geometry.chord_cp')
 
-        # HELIX to RETHORST
+        # HELIX to SLIPSTREAM
         for index in range(wingpropinfo.nr_props):
             # Rethorst
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
@@ -193,7 +193,7 @@ class WingSlipstreamPropOptimisation(om.Group):
             # Tube model
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
                          f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_radii_BEM_rotor0")
-            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_f_a",
+            self.connect("PARAMETERS.force_distr", #f"HELIX_{index}.om_helix.rotorcomp_0_f_a",
                          f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_force_BEM_rotor0")
 
         # HELIX to HELIX_COUPLED
