@@ -43,6 +43,10 @@ class WingInfo:
     empty_cg: np.array = np.zeros((3))
     CL0: float = 0.
     fuel_mass: float = 0. # we fly eletric
+    youngsmodulus: float = 7e10
+    yieldstress: float = 500e6/2.5
+    G: float = 30e9
+    mrho: float = 3e3
 
 
 @dataclass
@@ -57,6 +61,7 @@ class PropInfo:
     span: np.array
     airfoils: list[AirfoilInfo]
     prop_angle: float = 0.
+    rotation_direction: int = 1 # 1 for cw, -11 for ccw
 
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])
@@ -124,12 +129,14 @@ class WingPropInfo:
         
         self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
         
-        wing_spacing = (self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/self.spanwise_discretisation_wing
         prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller
+        self.spanwise_discretisation_wing = int((self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/((self.nr_props+1)*prop_spacing))
+        if self.spanwise_discretisation_wing%2==0: self.spanwise_discretisation_wing+=1
         
-        print('PROP VERSUS WING SPACING: ', wing_spacing/prop_spacing, ' PLEASE MAKE SURE THIS VLAUE IS CLOSE TO 1.0 FOR BEST RESULTS')
-        assert (wing_spacing/prop_spacing>0.95 and wing_spacing/prop_spacing<1.05), 'DISCREPANCY BETWEEN WING AND PROP SPACING TOO LARGE'        
+        self.spanwise_discretisation_wing *= self.nr_props+1
         
+        print('PROP VERSUS WING SPACING: ', ((self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/(self.spanwise_discretisation_wing))/prop_spacing, ' PLEASE MAKE SURE THIS VLAUE IS CLOSE TO 1.0 FOR BEST RESULTS')
+
         # TODO: fix this class, it looks pretty terrible rn
         if self.linear_mesh:
             from openaerostruct.geometry.utils import generate_mesh

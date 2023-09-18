@@ -28,9 +28,6 @@ def stackedplots_prop(db_name: str,
               savedir: str)->None:
     database = SqliteCaseReader(db_name, pre_load=True)
 
-    # === Misc variables ===
-    span = wingpropinfo.wing.span
-
     # === Objective, constraints and DVs ===
     # Original
     first_case = database.get_cases()[0]
@@ -41,8 +38,12 @@ def stackedplots_prop(db_name: str,
     veldistr_orig = first_case.outputs['HELIX_0.om_helix.rotorcomp_0_velocity_distribution']
     veldistr_opt = last_case.outputs['HELIX_0.om_helix.rotorcomp_0_velocity_distribution']
     
-    twist_orig = first_case.outputs[f'HELIX_{0}.om_helix.geodef_parametric_0_twist']
-    twist_opt = last_case.outputs[f'HELIX_{0}.om_helix.geodef_parametric_0_twist']
+    try:
+        twist_orig = first_case.outputs['HELIX_0.om_helix.geodef_parametric_0_twist']
+        twist_opt = last_case.outputs['HELIX_0.om_helix.geodef_parametric_0_twist']
+    except:
+        twist_orig = first_case.outputs['DESIGNVARIABLES.rotor_0_twist']
+        twist_opt = last_case.outputs['DESIGNVARIABLES.rotor_0_twist']
     
     subplots_prop(  design_variable_array=[np.linspace(0, 1, len(veldistr_orig)),np.linspace(0., 1, len(twist_orig))],
                     nr_plots=2,

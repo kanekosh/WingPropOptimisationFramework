@@ -33,7 +33,7 @@ wing_twist = .0
 wing_chord = 0.24
 wingspan = 0.748*2 #0.73*2.*0.952
 
-prop_refinement = 4
+prop_refinement = 6
 
 spanwise_discretisation_propeller_BEM = len(span)
 
@@ -45,22 +45,24 @@ PROWIM_parameters = ParamInfo(  vinf=40.,
                                 speed_of_sound=333.4,
                                 air_density=1.2087)
 
-PROWIM_prop_1 = PropInfo(label='Prop1',
-                 prop_location=-0.332,
-                 nr_blades=4,
-                 rot_rate=(PROWIM_parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi, # in rad/s,
-                 chord=np.array(chord, order='F')*prop_radius,
-                 twist=np.array(twist, order='F'),
-                 span=np.array(span, order='F'),
-                 airfoils=[AirfoilInfo(label=f'Foil_{index}',
-                                       Cl_alpha=Cl_alpha[index],
-                                       alpha_L0=alpha_L0[index],
-                                       alpha_0=alpha_0[index],
-                                        M=M[index])
-                           for index in range(spanwise_discretisation_propeller_BEM+1)],
-                 ref_point=ref_point,
-                 local_refinement=prop_refinement
-                 )
+PROWIM_prop_1 = PropInfo(   label='Prop1',
+                            prop_location=-0.332,
+                            nr_blades=4,
+                            rot_rate=(PROWIM_parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi, # in rad/s,
+                            chord=np.array(chord, order='F')*prop_radius,
+                            twist=np.array(twist, order='F'),
+                            span=np.array(span, order='F'),
+                            airfoils=[AirfoilInfo(label=f'Foil_{index}',
+                                                Cl_alpha=Cl_alpha[index],
+                                                alpha_L0=alpha_L0[index],
+                                                alpha_0=alpha_0[index],
+                                                    M=M[index])
+                                    for index in range(spanwise_discretisation_propeller_BEM+1)],
+                            ref_point=ref_point,
+                            local_refinement=prop_refinement,
+                            rotation_direction=1,
+                            prop_angle=45
+                            )
 
 PROWIM_prop_2 = PropInfo(label='Prop1',
                  prop_location=0.332,
@@ -76,7 +78,9 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                                         M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
-                 local_refinement=prop_refinement
+                 local_refinement=prop_refinement,
+                 rotation_direction=-1,
+                 prop_angle=45
                  )
 
 

@@ -49,10 +49,10 @@ class WingModelTube(om.Group):
                     "with_viscous": True,
                     "with_wave": False,  # if true, compute wave drag
                     # Structural values are based on aluminum 7075
-                    "E": 70.0e9,  # [Pa] Young's modulus of the spar: divide by 2 for mimicing manoeuvre
-                    "G": 30.0e9,  # [Pa] shear modulus of the spar
-                    "yield": 500.0e6 / 2.5,  # [Pa] yield stress divided by 2.5 for limiting case
-                    "mrho": 3.0e3,  # [kg/m^3] material density
+                    "E": wingpropinfo.wing.youngsmodulus,  # [Pa] Young's modulus of the spar: divide by 2 for mimicing manoeuvre
+                    "G": wingpropinfo.wing.G,  # [Pa] shear modulus of the spar
+                    "yield": wingpropinfo.wing.yieldstress,# [Pa] yield stress divided by 2.5 for limiting case
+                    "mrho": wingpropinfo.wing.mrho, # [kg/m^3] material density
                     "fem_origin": 0.35,  # normalized chordwise location of the spar
                     "wing_weight_ratio": 2.0,
                     "struct_weight_relief": True,  # True to add the weight of the structure to the loads on the structure

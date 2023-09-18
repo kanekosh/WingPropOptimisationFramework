@@ -59,7 +59,8 @@ PROWIM_prop_1 = PropInfo(label='Prop1',
                                         M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
-                 local_refinement=prop_refinement
+                 local_refinement=prop_refinement,
+                 rotation_direction=1
                  )
 
 PROWIM_prop_2 = PropInfo(label='Prop1',
@@ -76,7 +77,8 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                                         M=M[index])
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
-                 local_refinement=prop_refinement
+                 local_refinement=prop_refinement,
+                 rotation_direction=-1
                  )
 
 

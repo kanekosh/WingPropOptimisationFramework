@@ -6,7 +6,7 @@ import copy
 
 # --- Internal ---
 from src.utils.tools import print_results
-from src.postprocessing.plots import all_plots, stackedplots_wing
+from src.postprocessing.plots import all_plots, stackedplots_wing, stackedplots_prop
 from src.integration.coupled_groups_optimisation import WingSlipstreamPropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
@@ -19,16 +19,31 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    # # === Plotting ===
+    # === Plotting ===
     # db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
     # savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
-    # stackedplots_wing(db_name=db_name,
-    #             wingpropinfo=PROWIM_wingpropinfo,
-    #             savedir=savepath)
+    # stackedplots_prop(db_name=db_name,
+    #                 wingpropinfo=PROWIM_wingpropinfo,
+    #                 savedir=savepath)
+    # # stackedplots_wing(db_name=db_name,
+    # #             wingpropinfo=PROWIM_wingpropinfo,
+    # #             savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 15 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 4 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    
+    # PROWIM_wingpropinfo.wing.twist = np.array([0.16758064, 0.16531812, 0.17043133, 0.16231965, 0.18910957,
+    #    0.18910647, 0.16232025, 0.17043081, 0.16531831, 0.16758051])
+    # PROWIM_wingpropinfo.wing.chord = np.array([0.16758064, 0.16531812, 0.17043133, 0.16231965, 0.18910957,
+    #    0.18910647, 0.16232025, 0.17043081, 0.16531831, 0.16758051])
+    
+    # for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
+    #     PROWIM_wingpropinfo.propeller[iprop].twist = np.array([86.03333075, 84.34827976, 82.77931173, 81.35095221, 79.25326958,
+    #                                                             79.14545502, 78.52304526, 76.11417496, 75.71005392, 74.84041569,
+    #                                                             71.90351263, 71.62839411, 70.53516045, 67.64705164, 67.30649674,
+    #                                                             66.0399728 , 63.37655562, 62.88408362, 61.5509477 , 57.92588983])
+    #     PROWIM_wingpropinfo.propeller[iprop].rot_rate = 222.56
 
     PROWIM_wingpropinfo.__post_init__()
     
@@ -118,9 +133,9 @@ if __name__ == '__main__':
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
-        "Major feasibility tolerance": 1.0e-9,
-        "Major optimality tolerance": 1.0e-9,
-        "Minor feasibility tolerance": 1.0e-8,
+        "Major feasibility tolerance": 1.0e-6,
+        "Major optimality tolerance": 1.0e-6,
+        "Minor feasibility tolerance": 1.0e-6,
         "Verify level": -1,
         "Function precision": 1.0e-6,
         # "Major iterations limit": 1,
@@ -143,7 +158,11 @@ if __name__ == '__main__':
                 'OPENAEROSTRUCT.AS_point_0.total_perf.L',
                 'OPENAEROSTRUCT.AS_point_0.total_perf.D',
                 'RETHORST.velocity_distribution',
-                'propeller_velocity']
+                'RETHORST.propeller_velocity',
+                "HELIX_0.om_helix.rotorcomp_0_radii",
+                "HELIX_0.om_helix.rotorcomp_0_velocity_distribution",
+                "HELIX_0.om_helix.geodef_parametric_0_twist",
+                "HELIX_0.om_helix.geodef_parametric_0_rot_rate"]
     
     for key in design_vars.keys():
         includes.extend(key)
@@ -177,3 +196,6 @@ if __name__ == '__main__':
     stackedplots_wing(db_name=db_name,
                 wingpropinfo=PROWIM_wingpropinfo,
                 savedir=savepath)
+    stackedplots_prop(db_name=db_name,
+                    wingpropinfo=PROWIM_wingpropinfo,
+                    savedir=savepath)
