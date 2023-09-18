@@ -102,7 +102,7 @@ class WingPropInfo:
     linear_mesh: bool = False
     
     # Parameters for tube model
-    gamma_tangential_dx: float = 0.1
+    gamma_tangential_dx: float = 0.3 # make sure that this values doesn't place a vortex ring too close to a collocation point: at 75% of chord
     gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
     
     if NO_PROPELLER:

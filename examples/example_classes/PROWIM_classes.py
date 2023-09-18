@@ -33,7 +33,7 @@ wing_twist = .0
 wing_chord = 0.24
 wingspan = 0.748*2 #0.73*2.*0.952
 
-prop_refinement = 6
+prop_refinement = 4
 
 spanwise_discretisation_propeller_BEM = len(span)
 
@@ -97,7 +97,7 @@ PROWIM_wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=21*3,
+PROWIM_wingpropinfo = WingPropInfo( spanwise_discretisation_wing=21*3,
                                     spanwise_discretisation_propeller=15,
                                     spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                                     propeller=[PROWIM_prop_1, PROWIM_prop_2],

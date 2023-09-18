@@ -27,18 +27,22 @@ if __name__ == '__main__':
     #             savedir=savepath)
     # quit()
 
+    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
+    # PROWIM_wingpropinfo.parameters.wing_aoa = 2.
     
     for index in range(len(PROWIM_wingpropinfo.propeller)):
         PROWIM_wingpropinfo.propeller[index].rot_rate = 1120.14159572
-        PROWIM_wingpropinfo.propeller[index].twist = np.array([67.87061616, 61.89262009, 56.4568298,  51.87830046, 47.14861896, 48.24362368,
+        PROWIM_wingpropinfo.propeller[index].twist = np.array([ 67.87061616, 61.89262009, 56.4568298,  51.87830046, 47.14861896, 48.24362368,
                                                                 45.9118566,  43.80572937, 41.47751692, 39.32536837, 37.22149041, 35.11703952,
                                                                 33.28665179, 31.58342076, 29.98635087, 28.56331731, 27.15163666, 25.72162575,
                                                                 24.02241404, 21.16428954],
-                                                                    order='F'
+                                                                order='F'
                                                             )
         PROWIM_wingpropinfo.propeller[index].prop_angle = 45
+        # PROWIM_wingpropinfo.propeller[index].rotation_direction = 1
 
     PROWIM_wingpropinfo.__post_init__()
     
@@ -112,23 +116,25 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import niceplots
     
+    plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(3, figsize=(10, 8), sharex=True)
     veldistr_x = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 0]
     veldistr_y = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 1]
     veldistr_z = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 2]
     
-    # veldistr_x = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 0]
-    # veldistr_y = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 1]
-    # veldistr_z = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 2]
+    veldistr_x = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 0]
+    veldistr_y = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 1]
+    veldistr_z = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 2]
     
-    wingspan = np.linspace(-0.5, 0.5, len(veldistr_x), len(veldistr_x))
-    
-    plt.style.use(niceplots.get_style())
+    wingspan = PROWIM_wingpropinfo.vlm_mesh_control_points
     
     for index, (veldistr, ylabel) in enumerate(zip([veldistr_x, veldistr_y, veldistr_z],
-                                               ['Velocity, x-axis', 'Velocity, y-axis', 'Velocity, z-axis'])):
+                                               [r'$\Delta V_x$',
+                                                r'$\Delta V_y$',
+                                                r'$\Delta V_z$'])):
         ax[index].plot(wingspan, veldistr)       
         ax[index].set_ylabel(ylabel)
+        niceplots.adjust_spines(ax[index], outward=True)
 
     plt.savefig('vel_distr.png')
     

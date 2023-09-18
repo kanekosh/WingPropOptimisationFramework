@@ -53,4 +53,4 @@ class Parameters(om.IndepVarComp):
         def parabola(x): return -x**2+1
         
         # Misc parameters
-        self.add_output('force_distr', val=parabola(np.linspace(-1, 1, 76)))
+        self.add_output('force_distr', val=parabola(np.linspace(-1., 1., 76)))

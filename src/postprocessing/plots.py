@@ -49,6 +49,7 @@ def stackedplots_prop(db_name: str,
                     nr_plots=2,
                     xlabel=r'Normalised blade location, $r/R$', ylabel=[r'Exit velocity, $m/s$', r'Twist, $deg$'],
                     savepath=os.path.join(savedir, 'prop_results'), 
+                    wingpropinfo=wingpropinfo,
                     veldistr=[veldistr_orig, veldistr_opt],
                     twist=[twist_orig, twist_opt])
 
@@ -335,6 +336,7 @@ def scatter_plots(db_name: str,
 def subplots_prop(design_variable_array: np.array, nr_plots: int,
              xlabel: str, ylabel: str,
              savepath: str, 
+             wingpropinfo: WingPropInfo,
              **kwargs)->None:
     
     colors = get_niceColors()
@@ -357,6 +359,16 @@ def subplots_prop(design_variable_array: np.array, nr_plots: int,
         ymax = np.max([np.max(original), np.max(optimised)])*margin
         ymin = np.min([np.min(original), np.min(optimised)])*1/margin
         
+        discr_prop = int(wingpropinfo.spanwise_discretisation_propeller)
+        x = np.linspace(-1, 1, discr_prop)
+        x = x[int(discr_prop/2):]
+        
+        x = [0.5*(x[index]+x[index+1]) for index in range(len(x)-1)]
+        
+        ave = np.average(optimised)
+        ave_orig = np.average(original)
+        ax[iplot].scatter(x, np.ones(len(x))*ave, linewidth=1, label='Wing nodes')
+        ax[iplot].scatter(np.linspace(0, 1, 20), np.ones(20)*ave_orig, linewidth=1, label='Propeller nodes')
         ax[iplot].plot(spanwise[iplot], original,
                 label=f'Original', color='Orange', linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot], optimised,
