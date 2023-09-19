@@ -7,7 +7,7 @@ import copy
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_wing
-from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisation
+from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisationTest
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
@@ -27,11 +27,11 @@ if __name__ == '__main__':
     #             savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
+    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
-    # PROWIM_wingpropinfo.parameters.wing_aoa = 2.
+    PROWIM_wingpropinfo.NO_CORRECTION = True
     
     for index in range(len(PROWIM_wingpropinfo.propeller)):
         PROWIM_wingpropinfo.propeller[index].rot_rate = 1120.14159572
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     
     
     prob = om.Problem()
-    prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
+    prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
                                                 objective=objective,
                                                 constraints=constraints,
                                                 design_vars=design_vars)
@@ -113,32 +113,64 @@ if __name__ == '__main__':
     prob.setup()
     prob.run_model()
     
+    lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
+    
+    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
+    PROWIM_wingpropinfo.force = 100
+    PROWIM_wingpropinfo.__post_init__()
+
+    prob = om.Problem()
+    prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
+                                                objective=objective,
+                                                constraints=constraints,
+                                                design_vars=design_vars)
+
+    # === Analysis ===
+    prob.setup()
+    prob.run_model()
+    
+    lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
+    
+    wingspan = PROWIM_wingpropinfo.vlm_mesh_control_points
+    
     import matplotlib.pyplot as plt
     import niceplots
     
     plt.style.use(niceplots.get_style())
-    _, ax = plt.subplots(3, figsize=(10, 8), sharex=True)
     veldistr_x = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 0]
     veldistr_y = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 1]
     veldistr_z = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 2]
     
-    veldistr_x = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 0]
-    veldistr_y = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 1]
-    veldistr_z = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 2]
+    _, ax = plt.subplots(1, figsize=(10, 5), sharex=True)
+    ax.plot(wingspan, lift_coefficient_withoutprop, label='No prop', linestyle='dashed', color='black', linewidth=1)
+    ax.plot(wingspan, lift_coefficient_withprop, label='With prop', linewidth=2)
+    ax.set_ylabel(r'$C_l$')
+    ax.set_xlabel(r'$Span$')
+    ax.legend()
     
-    wingspan = PROWIM_wingpropinfo.vlm_mesh_control_points
+    plt.savefig('propnoprop.png')
+    plt.clf()
     
-    for index, (veldistr, ylabel) in enumerate(zip([veldistr_x, veldistr_y, veldistr_z],
+    # veldistr_x = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 0]
+    # veldistr_y = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 1]
+    # veldistr_z = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 2]
+    
+    _, ax = plt.subplots(4, figsize=(12, 8), sharex=True)
+    for index, (veldistr, ylabel) in enumerate(zip([veldistr_x, veldistr_y, veldistr_z, lift_coefficient_withprop],
                                                [r'$\Delta V_x$',
                                                 r'$\Delta V_y$',
-                                                r'$\Delta V_z$'])):
+                                                r'$\Delta V_z$',
+                                                r'$C_l$'])):
         ax[index].plot(wingspan, veldistr)       
         ax[index].set_ylabel(ylabel)
         niceplots.adjust_spines(ax[index], outward=True)
+        ax[index].set_ylim(min(veldistr)*1.1, max(veldistr)/0.9)
 
     plt.savefig('vel_distr.png')
     
     quit()
+    
+    # === Optimization ===
 
         # Check derivatives  
     if False:

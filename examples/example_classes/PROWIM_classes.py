@@ -29,9 +29,9 @@ M = data['M']
 
 J = 1.0 # advance ratio
 
-wing_twist = .0
+wing_twist = 0.
 wing_chord = 0.24
-wingspan = 0.748*2 #0.73*2.*0.952
+wingspan = 0.73*2.*0.952
 
 prop_refinement = 4
 
@@ -60,7 +60,7 @@ PROWIM_prop_1 = PropInfo(   label='Prop1',
                                     for index in range(spanwise_discretisation_propeller_BEM+1)],
                             ref_point=ref_point,
                             local_refinement=prop_refinement,
-                            rotation_direction=1,
+                            rotation_direction=-1,
                             prop_angle=45
                             )
 
@@ -79,14 +79,14 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                            for index in range(spanwise_discretisation_propeller_BEM+1)],
                  ref_point=ref_point,
                  local_refinement=prop_refinement,
-                 rotation_direction=-1,
+                 rotation_direction=1,
                  prop_angle=45
                  )
 
 
 PROWIM_wing = WingInfo(label='PROWIM_wing',
                 span=wingspan,
-                thickness = np.ones(10)*0.01,
+                thickness = np.ones(10)*0.1,
                 chord=np.ones(10,
                               order='F')*wing_chord,
                 twist=np.ones(10,

@@ -105,6 +105,8 @@ class WingPropInfo:
     gamma_tangential_dx: float = 0.3 # make sure that this values doesn't place a vortex ring too close to a collocation point: at 75% of chord
     gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
     
+    force: float = 0.
+    
     if NO_PROPELLER:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
 
@@ -118,7 +120,13 @@ class WingPropInfo:
         for index, _ in enumerate(self.prop_locations):
             self.prop_locations[index] = self.propeller[index].prop_location
             self.prop_radii[index] = self.propeller[index].prop_radius
-
+        
+        prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller
+        self.spanwise_discretisation_wing = int((self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/((self.nr_props+1)*prop_spacing))
+        if self.spanwise_discretisation_wing%2==0: self.spanwise_discretisation_wing+=1
+        
+        self.spanwise_discretisation_wing *= self.nr_props+1
+        
         self.vlm_mesh = meshing(span=self.wing.span,
                                 chord=self.wing.chord[0],
                                 prop_locations=self.prop_locations,
@@ -128,12 +136,6 @@ class WingPropInfo:
                                 spanwise_panels_propeller=self.spanwise_discretisation_propeller)
         
         self.spanwise_discretisation_nodes = np.shape(self.vlm_mesh)[1]
-        
-        prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller
-        self.spanwise_discretisation_wing = int((self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/((self.nr_props+1)*prop_spacing))
-        if self.spanwise_discretisation_wing%2==0: self.spanwise_discretisation_wing+=1
-        
-        self.spanwise_discretisation_wing *= self.nr_props+1
         
         print('PROP VERSUS WING SPACING: ', ((self.wing.span-self.nr_props*2*self.prop_radii[0, -1])/(self.spanwise_discretisation_wing))/prop_spacing, ' PLEASE MAKE SURE THIS VLAUE IS CLOSE TO 1.0 FOR BEST RESULTS')
 
@@ -162,4 +164,6 @@ class WingPropInfo:
         
         # This velocity distribution will be used in case no propellers are configured
         self.velocity_distribution_nopropeller = np.ones((self.spanwise_discretisation_nodes-1))*self.parameters.vinf
+        
+        self.forceinput = np.ones((self.propeller[index].local_refinement*len(self.propeller[index].span)))*self.force
         

@@ -1,24 +1,28 @@
 # --- Built-ins ---
-import os
 from pathlib import Path
-import json
+import os
 import logging
+import json
 
 # --- Internal ---
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
-from src.integration.coupled_groups_analysis import WingSlipstreamPropAnalysis
+from src.utils.tools import print_results
+from src.postprocessing.plots import all_plots, stackedplots_wing
+from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisation
+# from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
+import openmdao.api as om
 import numpy as np
 import pandas as pd
-import openmdao.api as om
 import matplotlib.pyplot as plt
 import niceplots
+
 
 logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
-
+prop_radius = 0.1185
 # === Read in PROWIM data ===
 with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
     data = json.load(file)
@@ -104,7 +108,7 @@ wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
                             spanwise_discretisation_propeller=21,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
@@ -112,115 +116,110 @@ wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
                             parameters=parameters
                             )
 
-
-class PROWIMAnalysis(om.Group):
-    def initialize(self):
-        self.options.declare('WingPropInfo', default=WingPropInfo)
-
-    def setup(self):
-        self.add_subsystem('PropellerSlipstreamWingModel',
-                           subsys=WingSlipstreamPropAnalysis(WingPropInfo=wingpropinfo))
-
-    def configure(self):
-        # Empty because we do analysis
-        ...
-
-
 if __name__ == '__main__':
-    # === Generate numerical data ===
-    CL_numerical = []
-    J = np.array([0.796, 0.8960, float('nan')])
-    rot_rate = (wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
-    angles = np.linspace(-8, 11, 3)
-    
-    prob = om.Problem()
-
-    for index_rotational, _ in enumerate(rot_rate):
-        CL_numerical_tmp, CD_numerical_tmp = [], []
-        for index_propeller, _ in enumerate(wingpropinfo.propeller):
-            wingpropinfo.propeller[index_propeller].rot_rate = rot_rate[index_rotational]
-        
-        if np.isnan(rot_rate[index_rotational]):
-            wingpropinfo.NO_CORRECTION=True
-            wingpropinfo.NO_PROPELLER=True
-        
-        elif J[index_rotational]==0.796:
-            wingpropinfo.NO_CORRECTION=False
-            wingpropinfo.NO_PROPELLER=False
-            wingpropinfo.wing.CL0 = 0.3079
-            
-        elif J[index_rotational]==0.8960:
-            wingpropinfo.NO_CORRECTION=False
-            wingpropinfo.NO_PROPELLER=False
-            wingpropinfo.wing.CL0 = 0.2938
-            
-        else:
-            wingpropinfo.NO_CORRECTION=False
-            wingpropinfo.NO_PROPELLER=False
-            wingpropinfo.wing.CL0 = 0.283
-
-        for angle in angles:
-            print(f'Angle of attack: {angle: ^10}')
-            wingpropinfo.parameters.wing_aoa = angle
-            
-            prob.model = PROWIMAnalysis(WingPropInfo=wingpropinfo)
-            prob.setup()
-            prob.run_model()
-
-            CL_numerical_tmp.append(prob["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.wing_perf.CL"].tolist()[0])
-            CD_numerical_tmp.append(prob["PropellerSlipstreamWingModel.OPENAEROSTRUCT.AS_point_0.total_perf.D"].tolist()[0])
-            
-        CL_numerical.append(CL_numerical_tmp)
-
-    print(CD_numerical_tmp)
     # === Load in (experimental) validation data ===
-    validation_file = os.path.join(BASE_DIR, 'data', 'PROWIM_validation_conventional.txt')
-    validation_data = pd.read_csv(validation_file, delimiter=',', skiprows=22)
+    validationsetup_file = os.path.join(BASE_DIR, 'data', 'PROWIM_validation_conventional.txt')
+    validationsetup_data = pd.read_csv(validationsetup_file, delimiter=',', skiprows=22)
     
     # Validation data for J=inf (prop-off)
     n=0
     index1 = n*19
     index2 = (n+1)*19
-    aoa = validation_data['AoA'][index1:index2]
-    CL_Jinf = validation_data['CL'][index1:index2]
-    CD_Jinf = validation_data['CD'][index1:index2]
-    J_inf = validation_data['J'][index1+1]
+    aoa = validationsetup_data['AoA'][index1:index2]
+    CL_Jinf = validationsetup_data['CL'][index1:index2]
+    CD_Jinf = validationsetup_data['CD'][index1:index2]
+    J_inf = validationsetup_data['J'][index1+1]
     
     # Validation data for J=1
     n=2
     index1 = n*19
     index2 = (n+1)*19
-    aoa = validation_data['AoA'][index1:index2]
-    CL_J1 = validation_data['CL'][index1:index2]
-    CD_J1 = validation_data['CD'][index1:index2]
-    J_1 = validation_data['J'][index1+1]
+    aoa = validationsetup_data['AoA'][index1:index2]
+    CL_J1 = validationsetup_data['CL'][index1:index2]
+    CD_J1 = validationsetup_data['CD'][index1:index2]
+    J_1 = validationsetup_data['J'][index1+1]
     
     # Validation data for J=0.796
     n=3
     index1 = n*19
     index2 = (n+1)*19
-    aoa = validation_data['AoA'][index1:index2]
-    CL_J0796 = validation_data['CL'][index1:index2]
-    CD_J0796 = validation_data['CD'][index1:index2]
-    J_0796 = validation_data['J'][index1+1]
+    aoa = validationsetup_data['AoA'][index1:index2]
+    CL_J0796 = validationsetup_data['CL'][index1:index2]
+    CD_J0796 = validationsetup_data['CD'][index1:index2]
+    J_0796 = validationsetup_data['J'][index1+1]
     
-    # === Plot results ===
+    # Validation data for J=0.696
+    n=4
+    index1 = n*19
+    index2 = (n+1)*19
+    aoa = validationsetup_data['AoA'][index1:index2]
+    CL_J0696 = validationsetup_data['CL'][index1:index2]
+    CD_J0696 = validationsetup_data['CD'][index1:index2]
+    J_0696 = validationsetup_data['J'][index1+1]
+    
+    rhoinf = validationsetup_data['rhoInf'][0]
+    Vinf = validationsetup_data['Vinf'][0]
+    qinf = 0.5*rhoinf*Vinf**2
+    
+    validation_file = os.path.join(BASE_DIR, 'data', 'exp_data_conv_J07.txt')
+    validation_CL_CX_data = pd.read_csv(validation_file, delimiter=',')
+    CX_validation = validation_CL_CX_data['CX_J=0.7']
+    CL_validation = validation_CL_CX_data['CL_J=0.7']
+
+    angles = np.linspace(-5, 11, 6)
+    T, D, CL, CX, CD = [], [], [], [], []
+    
+    # === Setup PROWIM test case ===
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
+    PROWIM_wingpropinfo.NO_CORRECTION = False
+    PROWIM_wingpropinfo.NO_PROPELLER = False
+    
+    J = np.array([0.7, 0.796, 0.8960, float('nan')])
+    rot_rate = (PROWIM_wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
+    
+    for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
+        PROWIM_wingpropinfo.propeller[iprop].rot_rate = rot_rate[0]
+
+    PROWIM_wingpropinfo.__post_init__()
+    
+    for angle in angles:
+        print(f'Angle of attack: {angle: ^10}')
+        PROWIM_wingpropinfo.parameters.wing_aoa = angle
+
+        prob = om.Problem()
+        prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
+                                                    objective={},
+                                                    constraints={},
+                                                    design_vars={})
+
+        # === Analysis ===
+        prob.setup()
+        prob.run_model()
+    
+        T = prob['HELIX_COUPLED.thrust_total']
+        S_ref = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.S_ref']-0.06995*0.24*2 # correction for nacelle
+        D = prob['OPENAEROSTRUCT.AS_point_0.total_perf.D']
+        
+        CL.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CL'])
+        CD.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CD'])
+        cx = (D-T)/(qinf*S_ref)
+        CX.append(cx)
+    
     plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(figsize=(10, 7))
     
-    ax.plot(angles, CL_numerical[0], label=r'Numerical, $J=0.796$', color='b')
-    ax.plot(angles, CL_numerical[1], label=r'Numerical, $J=0.896$', color='orange')
-    ax.plot(angles, CL_numerical[2], label=r'Numerical, $J=\infty$', color='grey')
-
-    ax.scatter(aoa, CL_J0796, label=r'Experimental, $J=0.796$', color='b')
-    ax.scatter(aoa, CL_J1, label=r'Experimental, $J=0.896$', color='orange')
-    ax.scatter(aoa, CL_Jinf, label=r'Experimental, $J=\infty$', color='grey')
+    # ax.plot(angles, T, label=r'$T$', color='b')
+    # ax.plot(angles, D, label=r'$D$', color='orange')
+    ax.scatter(CX_validation, CL_validation, label='Experimental data', color='orange')
+    ax.plot(CX, CL, label=r'$C_L$', color='b')
+    ax.set_ylabel(r'$C_L (-)$')
+    ax.set_xlabel(r'$C_X (-)$')
+    # ax.set_ylim((-0.4, 1.6))
+    # ax.set_xlim((-0.2, 0.))
+    ax.legend()
     
-    
-    ax.set_xlabel("Angle of Attack (deg)", fontweight='light')
-    ax.set_ylabel(r"Lift Coefficient ($C_L$)", fontweight='light')
-    ax.legend(fontsize='12')
-
     niceplots.adjust_spines(ax, outward=True)
-
-    plt.savefig(os.path.join(BASE_DIR, 'figures', 'PROWIM_VALIDATION.png'))
+    
+    plt.savefig(os.path.join(BASE_DIR, 'figures', 'TUBE_PROWIM_VALIDATION.png'))
