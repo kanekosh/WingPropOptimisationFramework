@@ -30,7 +30,7 @@ if __name__ == '__main__':
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
-    PROWIM_wingpropinfo.wing.span = 0.748*2
+    # PROWIM_wingpropinfo.wing.span = 0.748*2
     # PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
     
     PROWIM_wingpropinfo.__post_init__()
@@ -64,6 +64,8 @@ if __name__ == '__main__':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
+                    'OPENAEROSTRUCT.wing.structural_mass':
+                        {'lower': 0.}
                     }
     
     prob = om.Problem()
@@ -106,7 +108,9 @@ if __name__ == '__main__':
                                                     "OPENAEROSTRUCT.wing.mesh",
                                                     "OPENAEROSTRUCT.wing.geometry.twist",
                                                     "OPENAEROSTRUCT.wing.geometry.chord",
-                                                    "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl"
+                                                    "OPENAEROSTRUCT.AS_point_0.wing_perf.Cl",
+                                                    "OPENAEROSTRUCT.AS_point_0.total_perf.L",
+                                                    "OPENAEROSTRUCT.AS_point_0.total_perf.D",
                                                 ]
     
     print('==========================================================')

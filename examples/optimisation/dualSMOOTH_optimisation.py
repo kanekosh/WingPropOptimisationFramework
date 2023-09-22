@@ -19,22 +19,22 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    PROWIM_wingpropinfo.wing.empty_weight = 6 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21
 
     PROWIM_wingpropinfo.__post_init__()
     
     # === Plotting ===
-    db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
-    savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
-    stackedplots_prop(db_name=db_name,
-                    wingpropinfo=PROWIM_wingpropinfo,
-                    savedir=savepath)
-    stackedplots_wing(db_name=db_name,
-                wingpropinfo=PROWIM_wingpropinfo,
-                savedir=savepath)
-    quit()
+    # db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
+    # savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
+    # stackedplots_prop(db_name=db_name,
+    #                 wingpropinfo=PROWIM_wingpropinfo,
+    #                 savedir=savepath)
+    # stackedplots_wing(db_name=db_name,
+    #             wingpropinfo=PROWIM_wingpropinfo,
+    #             savedir=savepath)
+    # quit()
     
     objective = {
                 'HELIX_COUPLED.power_total':
@@ -76,7 +76,7 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.total_perf.CL':
-                        {'upper': 1.},
+                        {'upper': 0.9},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.L_equals_W':
@@ -84,15 +84,7 @@ if __name__ == '__main__':
                     'CONSTRAINTS.thrust_equals_drag':
                         {'equals': 0.}
                     }
-    
-    # optimisation_arch = MainWingPropOptimisation(wingpropinfo=PROWIM_wingpropinfo,
-    #                                              objective=objective,
-    #                                              constraints=constraints,
-    #                                              design_variables=design_vars,
-    #                                              database_savefile='.',
-    #                                              result_dir='.')
-    
-    
+
     prob = om.Problem()
     prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
                                                 objective=objective,
@@ -151,7 +143,9 @@ if __name__ == '__main__':
                 "HELIX_0.om_helix.rotorcomp_0_radii",
                 "HELIX_0.om_helix.rotorcomp_0_velocity_distribution",
                 "HELIX_0.om_helix.geodef_parametric_0_twist",
-                "HELIX_0.om_helix.geodef_parametric_0_rot_rate"]
+                "HELIX_0.om_helix.geodef_parametric_0_rot_rate",
+                "PARAMETERS.wing_mesh",
+                "PARAMETERS.wing_mesh_control_points"]
     
     for key in design_vars.keys():
         includes.extend(key)

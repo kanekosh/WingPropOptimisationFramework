@@ -110,10 +110,10 @@ if __name__ == '__main__':
                                                 design_vars=design_vars)
 
     # === Analysis ===
-    prob.setup()
-    prob.run_model()
+    # prob.setup()
+    # prob.run_model()
     
-    lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
+    # lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     
     # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
     PROWIM_wingpropinfo.force = 100
@@ -128,6 +128,17 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
+    
+    prob.check_partials(compact_print=False,
+                        show_only_incorrect=True,
+                        includes=[
+                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
+                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
+                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
+                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
+                                  ])
+    
+    quit()
     
     lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     

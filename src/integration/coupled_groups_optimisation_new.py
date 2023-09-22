@@ -550,7 +550,14 @@ class WingRethorstPropOptimisation(om.Group):
                          f"HELIX_{propeller_nr}.om_helix.geodef_parametric_0_chord")
 
         self.add_subsystem('RETHORST',
-                           subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
+                           subsys=SlipstreamRethorst(   propeller_quantity=len(wingpropinfo.propeller),
+                                                        propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
+                                                        propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
+                                                        propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
+                                                        propeller_local_refinement=wingpropinfo.propeller[0].local_refinement,
+                                                        NO_CORRECTION=wingpropinfo.NO_CORRECTION,
+                                                        NO_PROPELLER=wingpropinfo.NO_PROPELLER,
+                                                        mesh=wingpropinfo.vlm_mesh,))
 
         self.add_subsystem('OPENAEROSTRUCT',
                            subsys=WingModelTube(WingPropInfo=wingpropinfo))

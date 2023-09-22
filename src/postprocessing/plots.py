@@ -345,11 +345,11 @@ def subplots_prop(design_variable_array: np.array, nr_plots: int,
     margin = 1.03
     linewidth = 1.
     fontsize=12
-    y_size = 9
+    y_size = 10
     
     plt.style.use(niceplots.get_style())
     plt.rc('font', size=14)
-    _, ax = plt.subplots(nr_plots, figsize=(y_size, 8), sharex=True)
+    _, ax = plt.subplots(nr_plots, figsize=(y_size, 6), sharex=True)
         
     spanwise = design_variable_array
 
@@ -367,8 +367,8 @@ def subplots_prop(design_variable_array: np.array, nr_plots: int,
         
         ave = np.average(optimised)
         ave_orig = np.average(original)
-        ax[iplot].scatter(x, np.ones(len(x))*ave, linewidth=1, label='Wing nodes')
-        ax[iplot].scatter(np.linspace(0, 1, 20), np.ones(20)*ave_orig, linewidth=1, label='Propeller nodes')
+        # ax[iplot].scatter(x, np.ones(len(x))*ave, linewidth=1, label='Wing nodes')
+        # ax[iplot].scatter(np.linspace(0, 1, 20), np.ones(20)*ave_orig, linewidth=1, label='Propeller nodes')
         ax[iplot].plot(spanwise[iplot], original,
                 label=f'Original', color='Orange', linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot], optimised,
@@ -407,11 +407,11 @@ def subplots_wingprop(design_variable_array: np.array, nr_plots: int,
     margin = 1.03
     linewidth = 1.
     fontsize=12
-    y_size = 9
+    y_size = 10
     
     plt.style.use(niceplots.get_style())
     plt.rc('font', size=14)
-    _, ax = plt.subplots(nr_plots, figsize=(y_size, 8), sharex=True)
+    _, ax = plt.subplots(nr_plots, figsize=(y_size, 7), sharex=True)
         
     spanwise = design_variable_array
 

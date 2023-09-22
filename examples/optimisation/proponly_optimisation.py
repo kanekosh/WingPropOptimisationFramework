@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).parents[0]
 if __name__=='__main__':
     PROWIM_wingpropinfo.propeller = [PROWIM_prop_1]
     PROWIM_wingpropinfo.nr_props = len(PROWIM_wingpropinfo.propeller)
-    PROWIM_wingpropinfo.propeller[0].rot_rate = 249 * 2.0 * np.pi
+    PROWIM_wingpropinfo.propeller[0].rot_rate = 1060
     PROWIM_wingpropinfo.parameters.vinf = 40
     PROWIM_wingpropinfo.parameters.air_density = 1.2087
 
@@ -54,7 +54,7 @@ if __name__=='__main__':
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 5}
+                        {'equals': 4.58200728}
                     }
     
     prob = om.Problem()

@@ -89,8 +89,8 @@ prop2 = PropInfo(label='Prop1',
 
 parameters = ParamInfo(vinf=40.,
                        wing_aoa=0.,
-                       mach_number=0.2,
-                       reynolds_number=640_000,
+                       mach_number=40/333.,
+                       reynolds_number=450_000,
                        speed_of_sound=333.4,
                        air_density=air_density)
 
@@ -104,12 +104,13 @@ wing = WingInfo(label='PROWIM_wing',
                 thickness=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*0.01,
                 empty_weight=0.,
-                CL0 = 0.283
+                CL0 = 0.283,
+                CD0=0.021,
                 )
 
 
 PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
-                            spanwise_discretisation_propeller=21,
+                            spanwise_discretisation_propeller=15,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
                             wing=wing,
@@ -160,14 +161,8 @@ if __name__ == '__main__':
     rhoinf = validationsetup_data['rhoInf'][0]
     Vinf = validationsetup_data['Vinf'][0]
     qinf = 0.5*rhoinf*Vinf**2
-    
-    validation_file = os.path.join(BASE_DIR, 'data', 'exp_data_conv_J07.txt')
-    validation_CL_CX_data = pd.read_csv(validation_file, delimiter=',')
-    CX_validation = validation_CL_CX_data['CX_J=0.7']
-    CL_validation = validation_CL_CX_data['CL_J=0.7']
 
-    angles = np.linspace(-5, 11, 6)
-    T, D, CL, CX, CD = [], [], [], [], []
+    angles = np.linspace(-5, 15, 5)
     
     # === Setup PROWIM test case ===
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
@@ -176,7 +171,7 @@ if __name__ == '__main__':
     PROWIM_wingpropinfo.NO_CORRECTION = False
     PROWIM_wingpropinfo.NO_PROPELLER = False
     
-    J = np.array([0.7, 0.796, 0.8960, float('nan')])
+    J = np.array([0.696, 0.796, 0.8960, float('nan')])
     rot_rate = (PROWIM_wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
     
     for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
@@ -184,42 +179,57 @@ if __name__ == '__main__':
 
     PROWIM_wingpropinfo.__post_init__()
     
-    for angle in angles:
-        print(f'Angle of attack: {angle: ^10}')
-        PROWIM_wingpropinfo.parameters.wing_aoa = angle
-
-        prob = om.Problem()
-        prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
-                                                    objective={},
-                                                    constraints={},
-                                                    design_vars={})
-
-        # === Analysis ===
-        prob.setup()
-        prob.run_model()
-    
-        T = prob['HELIX_COUPLED.thrust_total']
-        S_ref = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.S_ref']-0.06995*0.24*2 # correction for nacelle
-        D = prob['OPENAEROSTRUCT.AS_point_0.total_perf.D']
-        
-        CL.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CL'])
-        CD.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CD'])
-        cx = (D-T)/(qinf*S_ref)
-        CX.append(cx)
-    
     plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(figsize=(10, 7))
     
-    # ax.plot(angles, T, label=r'$T$', color='b')
-    # ax.plot(angles, D, label=r'$D$', color='orange')
-    ax.scatter(CX_validation, CL_validation, label='Experimental data', color='orange')
-    ax.plot(CX, CL, label=r'$C_L$', color='b')
-    ax.set_ylabel(r'$C_L (-)$')
-    ax.set_xlabel(r'$C_X (-)$')
-    # ax.set_ylim((-0.4, 1.6))
-    # ax.set_xlim((-0.2, 0.))
-    ax.legend()
+    for irot_rate, num, thrust_div in zip(rot_rate, [7, 8, 9]):
+    # for irot_rate, num in zip([rot_rate[0]], [7]):
+        T, D, CL, CX, CD = [], [], [], [], []
+    
+        validation_file = os.path.join(BASE_DIR, 'data', f'exp_data_conv_J0{num}.txt')
+        validation_CL_CX_data = pd.read_csv(validation_file, delimiter=',')
+        CX_validation = validation_CL_CX_data[f'CX_J=0.{num}']
+        CL_validation = validation_CL_CX_data[f'CL_J=0.{num}']
+        
+        for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
+            PROWIM_wingpropinfo.propeller[iprop].rot_rate = irot_rate
+        
+        for angle in angles:
+            print(f'Angle of attack: {angle: ^10}')
+            PROWIM_wingpropinfo.parameters.wing_aoa = angle
+
+            prob = om.Problem()
+            prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
+                                                        objective={},
+                                                        constraints={},
+                                                        design_vars={})
+
+            # === Analysis ===
+            prob.setup()
+            prob.run_model()
+        
+            T = prob['HELIX_COUPLED.thrust_total']/1.1 # divide by 1.1 to account for thrust overprediction due to region with negative thrust
+            S_ref = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.S_ref']#-0.06995*0.24*2 # correction for nacelle
+            D = prob['OPENAEROSTRUCT.AS_point_0.total_perf.CD']*qinf*S_ref
+            
+            CL.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CL'])
+            CD.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CD'])
+            cx = (D-T)/(qinf*S_ref)
+            CX.append(cx)
+        
+        # ax.plot(angles, T, label=r'$T$', color='b')
+        # ax.plot(angles, D, label=r'$D$', color='orange')
+        ax.scatter(CX_validation, CL_validation, label=f'Exp., J=0.{num}')
+        ax.plot(CX, CL, label=f'Num., J=0.{num}', linestyle='dashed')
+        ax.set_ylabel(r'$C_L (-)$')
+        ax.set_xlabel(r'$C_X (-)$')
+        ax.set_ylim((-0.4, 1.6))
+        ax.set_xlim((-0.2, 0.))
+        ax.legend()
     
     niceplots.adjust_spines(ax, outward=True)
     
     plt.savefig(os.path.join(BASE_DIR, 'figures', 'TUBE_PROWIM_VALIDATION.png'))
+    
+    plt.clf()
+    plt.close()
