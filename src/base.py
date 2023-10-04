@@ -105,7 +105,7 @@ class WingPropInfo:
     gamma_tangential_dx: float = 0.3 # make sure that this values doesn't place a vortex ring too close to a collocation point: at 75% of chord
     gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
     
-    force: float = 0.
+    force: np.array = np.zeros(1)
     
     if NO_PROPELLER:
         assert (not NO_CORRECTION), 'ERROR: no propeller so no correction'
@@ -127,7 +127,7 @@ class WingPropInfo:
                 
         # === Misc variables ===
         self.velocity_distribution_nopropeller = np.ones((self.spanwise_discretisation_nodes-1))*self.parameters.vinf
-        self.forceinput = np.ones((self.propeller[-1].local_refinement*len(self.propeller[-1].span)))*self.force
+        self.forceinput = self.force #np.ones((self.propeller[-1].local_refinement*len(self.propeller[-1].span)))*self.force
         
     def _meshing(self):
         prop_spacing = (2*self.prop_radii[0, -1])/self.spanwise_discretisation_propeller

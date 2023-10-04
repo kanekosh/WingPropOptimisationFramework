@@ -25,13 +25,16 @@ if __name__=='__main__':
     db_name_isowing = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_wing.db')
     db_name_isoprop = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_propeller.db')
     db_name_coupled = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_wingprop.db')
+    db_name_trim = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_wingprop_trim.db')
 
     wingiso_opt = SqliteCaseReader(db_name_isowing, pre_load=True)
     propiso_opt = SqliteCaseReader(db_name_isoprop, pre_load=True)
     coupled_opt = SqliteCaseReader(db_name_coupled, pre_load=True)
+    trimmed = SqliteCaseReader(db_name_coupled, pre_load=True)
 
     comaprison_wing(db_name_isowing=wingiso_opt,
                       db_name_isoprop=propiso_opt,
                       db_name_coupled=coupled_opt,
+                      db_name_trim=trimmed,
                       wingpropinfo=PROWIM_wingpropinfo,
                       savedir=os.path.join(BASE_DIR, 'figures'))

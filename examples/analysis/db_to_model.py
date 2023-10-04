@@ -87,7 +87,7 @@ def db_to_wing(wingpropinfo: WingPropInfo,
 
 if __name__=='__main__':
     # === Get optimized geometry ===
-    db_name = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_wingprop.db')
+    db_name = os.path.join(BASE_DIR, '..', 'optimisation', 'results', 'data_propeller.db')
     database = SqliteCaseReader(db_name, pre_load=True)
     optimised = database.get_cases()[-1]
 

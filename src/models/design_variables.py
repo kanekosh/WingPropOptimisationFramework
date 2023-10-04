@@ -26,7 +26,8 @@ class DesignVariables(om.IndepVarComp):
         # Wing Design Variables
         self.add_output("span", val=wingpropinfo.wing.span, units="m")
         self.add_output("twist", val=wingpropinfo.wing.twist, units="deg")
-        self.add_output("chord", val=np.ones(len(wingpropinfo.wing.chord)), units="m")
+        # self.add_output("chord", val=np.ones(len(wingpropinfo.wing.chord)), units="m")
+        self.add_output("chord", val=wingpropinfo.wing.chord, units="m")
         
         # === Aero optimized starting point ===
         # self.add_output("span", val=wingpropinfo.wing.span, units="m")

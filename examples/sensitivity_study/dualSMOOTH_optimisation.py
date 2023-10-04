@@ -6,8 +6,8 @@ import copy
 
 # --- Internal ---
 from src.utils.tools import print_results
-from src.postprocessing.plots import all_plots, stackedplots_wing
-from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisationTest
+from src.postprocessing.plots import all_plots, stackedplots_wing, stackedplots_prop
+from src.integration.coupled_groups_optimisation import WingSlipstreamPropOptimisation
 from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
 
 # --- External ---
@@ -19,36 +19,35 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
-    # # === Plotting ===
+    # Start from 
+    PROWIM_wingpropinfo.wing.empty_weight = 4 # to make T=D
+    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
+    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21
+    
+    PROWIM_wingpropinfo.wing.twist = np.array([0.46846517, 2.17610658, 4.15730758, 5.3479122 , 5.91374365, 5.34593737, 4.15605468, 2.17579286, 0.46844342])
+    PROWIM_wingpropinfo.wing.chord =  np.array([0.139, 0.139, 0.139, 0.139, 0.139, 0.139, 0.139, 0.139, 0.139, 0.139])*1.1
+    
+    for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
+        PROWIM_wingpropinfo.propeller[iprop].rot_rate = 297.14675592
+        PROWIM_wingpropinfo.propeller[iprop].twist = np.array([ 84.21826336, 82.04569956, 79.87845891, 77.80052117, 75.56987563, 75.23247467,
+                                                                74.02391552, 72.63777794, 70.97214502, 69.34656879, 67.6472231,  65.89213233,
+                                                                64.16979439, 62.44326479, 60.72928336, 59.03473451, 57.31971251, 55.52004919,
+                                                                53.56646278, 50.99817013])
+                                                                            
+    # === Plotting ===
     # db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
     # savepath = os.path.join(BASE_DIR, 'results', 'propwing_results')
+    # stackedplots_prop(db_name=db_name,
+    #                 wingpropinfo=PROWIM_wingpropinfo,
+    #                 savedir=savepath)
     # stackedplots_wing(db_name=db_name,
     #             wingpropinfo=PROWIM_wingpropinfo,
     #             savedir=savepath)
     # quit()
-
-    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
-    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
-    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
-    PROWIM_wingpropinfo.NO_CORRECTION = True
-    
-    for index in range(len(PROWIM_wingpropinfo.propeller)):
-        PROWIM_wingpropinfo.propeller[index].rot_rate = 1120.14159572
-        PROWIM_wingpropinfo.propeller[index].twist = np.array([ 67.87061616, 61.89262009, 56.4568298,  51.87830046, 47.14861896, 48.24362368,
-                                                                45.9118566,  43.80572937, 41.47751692, 39.32536837, 37.22149041, 35.11703952,
-                                                                33.28665179, 31.58342076, 29.98635087, 28.56331731, 27.15163666, 25.72162575,
-                                                                24.02241404, 21.16428954],
-                                                                order='F'
-                                                            )
-        PROWIM_wingpropinfo.propeller[index].prop_angle = 45
-        # PROWIM_wingpropinfo.propeller[index].rotation_direction = 1
-
-    PROWIM_wingpropinfo.__post_init__()
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/433.04277037}
+                    {'scaler': 1/(2*32.17610257)}
                 }
 
     design_vars = {
@@ -68,6 +67,10 @@ if __name__ == '__main__':
                         {'lb': 0,
                         'ub': 90,
                         'scaler': 1./10},
+                    # 'PARAMETERS.alpha':
+                    #     {'lb': -10,
+                    #     'ub': 8,
+                    #     'scaler': 1},
                     'DESIGNVARIABLES.twist':
                         {'lb': -10,
                         'ub': 8,
@@ -75,7 +78,7 @@ if __name__ == '__main__':
                     'DESIGNVARIABLES.chord':
                         {'lb': 0,
                         'ub': 3,
-                        'scaler': 1},
+                        'scaler': 100},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 3e-3,
                         'ub': 5e-1,
@@ -86,41 +89,21 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.failure':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.total_perf.CL':
-                        {'upper': 1.},
+                        {'upper': 0.8},
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.AS_point_0.L_equals_W':
                         {'equals': 0.},
                     'CONSTRAINTS.thrust_equals_drag':
-                        {'equals': 0.}
+                        {'equals': 0.},
+                    'OPENAEROSTRUCT.wing.structural_mass':
+                        {'lower': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.D':
+                        {'lower': 0.}
                     }
-    
-    # optimisation_arch = MainWingPropOptimisation(wingpropinfo=PROWIM_wingpropinfo,
-    #                                              objective=objective,
-    #                                              constraints=constraints,
-    #                                              design_variables=design_vars,
-    #                                              database_savefile='.',
-    #                                              result_dir='.')
-    
-    
-    prob = om.Problem()
-    prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
-                                                objective=objective,
-                                                constraints=constraints,
-                                                design_vars=design_vars)
-
-    # === Analysis ===
-    # prob.setup()
-    # prob.run_model()
-    
-    # lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
-    
-    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
-    PROWIM_wingpropinfo.force = 100
-    PROWIM_wingpropinfo.__post_init__()
 
     prob = om.Problem()
-    prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
+    prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
                                                 objective=objective,
                                                 constraints=constraints,
                                                 design_vars=design_vars)
@@ -128,60 +111,6 @@ if __name__ == '__main__':
     # === Analysis ===
     prob.setup()
     prob.run_model()
-    
-    prob.check_partials(compact_print=False,
-                        show_only_incorrect=True,
-                        includes=[
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
-                                  ])
-    
-    quit()
-    
-    lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
-    
-    wingspan = PROWIM_wingpropinfo.vlm_mesh_control_points
-    
-    import matplotlib.pyplot as plt
-    import niceplots
-    
-    plt.style.use(niceplots.get_style())
-    veldistr_x = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 0]
-    veldistr_y = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 1]
-    veldistr_z = prob['TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector'][:, 2]
-    
-    _, ax = plt.subplots(1, figsize=(10, 5), sharex=True)
-    ax.plot(wingspan, lift_coefficient_withoutprop, label='No prop', linestyle='dashed', color='black', linewidth=1)
-    ax.plot(wingspan, lift_coefficient_withprop, label='With prop', linewidth=2)
-    ax.set_ylabel(r'$C_l$')
-    ax.set_xlabel(r'$Span$')
-    ax.legend()
-    
-    plt.savefig('propnoprop.png')
-    plt.clf()
-    
-    # veldistr_x = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 0]
-    # veldistr_y = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 1]
-    # veldistr_z = prob['OPENAEROSTRUCT.AS_point_0.coupled.aero_states.freestream_velocities'][:, 2]
-    
-    _, ax = plt.subplots(4, figsize=(12, 8), sharex=True)
-    for index, (veldistr, ylabel) in enumerate(zip([veldistr_x, veldistr_y, veldistr_z, lift_coefficient_withprop],
-                                               [r'$\Delta V_x$',
-                                                r'$\Delta V_y$',
-                                                r'$\Delta V_z$',
-                                                r'$C_l$'])):
-        ax[index].plot(wingspan, veldistr)       
-        ax[index].set_ylabel(ylabel)
-        niceplots.adjust_spines(ax[index], outward=True)
-        ax[index].set_ylim(min(veldistr)*1.1, max(veldistr)/0.9)
-
-    plt.savefig('vel_distr.png')
-    
-    quit()
-    
-    # === Optimization ===
 
         # Check derivatives  
     if False:
@@ -202,12 +131,12 @@ if __name__ == '__main__':
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
-        "Major feasibility tolerance": 1.0e-9,
-        "Major optimality tolerance": 1.0e-9,
-        "Minor feasibility tolerance": 1.0e-8,
+        "Major feasibility tolerance": 1.0e-5,
+        "Major optimality tolerance": 1.0e-7,
+        "Minor feasibility tolerance": 1.0e-5,
         "Verify level": -1,
         "Function precision": 1.0e-6,
-        "Major iterations limit": 0,
+        # "Major iterations limit": 1,
         "Nonderivative linesearch": None,
         "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop.out'),
         "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wingprop.out')
@@ -227,7 +156,14 @@ if __name__ == '__main__':
                 'OPENAEROSTRUCT.AS_point_0.total_perf.L',
                 'OPENAEROSTRUCT.AS_point_0.total_perf.D',
                 'RETHORST.velocity_distribution',
-                'propeller_velocity']
+                'RETHORST.propeller_velocity',
+                "HELIX_0.om_helix.rotorcomp_0_radii",
+                "HELIX_0.om_helix.rotorcomp_0_velocity_distribution",
+                "HELIX_0.om_helix.geodef_parametric_0_twist",
+                "HELIX_0.om_helix.geodef_parametric_0_rot_rate",
+                "PARAMETERS.wing_mesh",
+                "PARAMETERS.wing_mesh_control_points",
+                'OPENAEROSTRUCT.wing.structural_mass']
     
     for key in design_vars.keys():
         includes.extend(key)
@@ -261,3 +197,6 @@ if __name__ == '__main__':
     stackedplots_wing(db_name=db_name,
                 wingpropinfo=PROWIM_wingpropinfo,
                 savedir=savepath)
+    stackedplots_prop(db_name=db_name,
+                    wingpropinfo=PROWIM_wingpropinfo,
+                    savedir=savepath)

@@ -54,7 +54,7 @@ if __name__=='__main__':
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 2.39817438/2}
+                        {'equals': 3.71349415/2}
                     }
     
     prob = om.Problem()

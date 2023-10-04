@@ -37,13 +37,13 @@ class WingModelTube(om.Group):
                     "fem_model_type": "tube",
                     "thickness_cp": thickness_cp, # thickness of material
                     "twist_cp": np.zeros(len(twist_cp)),
-                    "chord_cp": np.ones(len(chord_cp)),
+                    "chord_cp":  np.ones(len(chord_cp)),
                     "mesh": mesh,
                     "CL0": winginfo.CL0,  # CL of the surface at alpha=0 
                     # please never ever set this to non-zero unless you want completely erroneous optimization results
                     # "W0": winginfo.empty_weight,
                     "CD0": winginfo.CD0,  # CD of the surface at alpha=0
-                    "k_lam": 0.05,  # percentage of chord with laminar flow, used for viscous drag
+                    "k_lam": 0.1,  # percentage of chord with laminar flow, used for viscous drag used to be 0.05
                     "t_over_c_cp": np.array([0.15]),  # thickness over chord ratio (NACA0015)
                     "c_max_t": 0.303,  # chordwise location of maximum (NACA0015) thickness
                     "with_viscous": True,

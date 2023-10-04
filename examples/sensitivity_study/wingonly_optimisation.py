@@ -28,10 +28,10 @@ if __name__ == '__main__':
     #             noprop=True)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 10 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 4 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
-    PROWIM_wingpropinfo.wing.span *= 2
+    # PROWIM_wingpropinfo.wing.span *= 1
     # PROWIM_wingpropinfo.wing.chord *= 2
     PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
     
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                         'ub': 30,
                         'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
-                        {'lb': 3e-3,
+                        {'lb': 5e-3,
                         'ub': 2e-1,
                         'scaler': 1e2},
                     # 'PARAMETERS.alpha':

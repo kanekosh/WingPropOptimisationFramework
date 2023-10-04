@@ -78,14 +78,14 @@ def stackedplots_wing(db_name: str,
     Cl_wing_opt = last_case.outputs['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     
     try:
-        chord_orig = first_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
-        chord_opt = last_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]
+        chord_orig = first_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]*0.24
+        chord_opt = last_case.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]*0.24
         
         chord_nodes_orig = np.zeros(len(Cl_wing_opt))
-        chord_nodes_orig = [(chord_orig[index]+chord_orig[index+1])/2 for index in range(len(chord_orig)-1)]
+        chord_nodes_orig = np.array([(chord_orig[index]+chord_orig[index+1])/2 for index in range(len(chord_orig)-1)])
         
         chord_nodes_opt = np.zeros(len(Cl_wing_opt))
-        chord_nodes_opt = [(chord_opt[index]+chord_opt[index+1])/2 for index in range(len(chord_opt)-1)]
+        chord_nodes_opt = np.array([(chord_opt[index]+chord_opt[index+1])/2 for index in range(len(chord_opt)-1)])
     
     except:
         chord_nodes_orig = np.ones(len(Cl_wing_opt))
@@ -370,9 +370,9 @@ def subplots_prop(design_variable_array: np.array, nr_plots: int,
         # ax[iplot].scatter(x, np.ones(len(x))*ave, linewidth=1, label='Wing nodes')
         # ax[iplot].scatter(np.linspace(0, 1, 20), np.ones(20)*ave_orig, linewidth=1, label='Propeller nodes')
         ax[iplot].plot(spanwise[iplot], original,
-                label=f'Original', color='Orange', linewidth=linewidth)
+                label=f'Original', color='Orange', linestyle='dashed',  linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot], optimised,
-                label=f'Optimised', color='b', linestyle='dashed', linewidth=linewidth)
+                label=f'Optimised', color='b', linewidth=linewidth)
 
         if iplot==1:
             ax[iplot].set_xlabel(xlabel, fontweight='ultralight')
@@ -386,7 +386,8 @@ def subplots_prop(design_variable_array: np.array, nr_plots: int,
             np.min(spanwise[iplot])*margin,
             np.max(spanwise[iplot])*margin)
         )
-        ax[iplot].legend(prop={'size': 9})
+        if iplot==0:
+            ax[iplot].legend(prop={'size': 9})
         niceplots.adjust_spines(ax[iplot], outward=True)
 
     plt.savefig(savepath)
@@ -421,9 +422,9 @@ def subplots_wingprop(design_variable_array: np.array, nr_plots: int,
         ymax = np.max([max(original), np.max(optimised)])*margin
         
         ax[iplot].plot(spanwise[iplot], original,
-                label=f'Original', color='Orange', linewidth=linewidth)
+                label=f'Original', color='Orange', linestyle='dashed', linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot], optimised,
-                label=f'Optimised', color='b', linestyle='dashed', linewidth=linewidth)
+                label=f'Optimised', color='b', linewidth=linewidth)
         
         # Plot elliptical lift curve if given
         if 'clc' in key:
@@ -458,7 +459,8 @@ def subplots_wingprop(design_variable_array: np.array, nr_plots: int,
             np.min(spanwise[iplot])*margin,
             np.max(spanwise[iplot])*margin)
         )
-        ax[iplot].legend(prop={'size': 9})
+        if iplot==0:
+            ax[iplot].legend(prop={'size': 9})
         niceplots.adjust_spines(ax[iplot], outward=True)
 
     plt.savefig(savepath)

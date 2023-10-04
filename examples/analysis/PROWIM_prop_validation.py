@@ -50,7 +50,7 @@ prop1 = PropInfo(label='Prop1',
                  nr_blades=4,
                  rot_rate=300.,
                  chord=np.array(chord, order='F')*prop_radius,
-                 twist=np.array(twist, order='F'),
+                 twist=np.array(twist, order='F')-1.2/2,
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
                                        Cl_alpha=Cl_alpha[index],
@@ -70,7 +70,7 @@ prop2 = PropInfo(label='Prop1',
                  nr_blades=4,
                  rot_rate=300.,
                  chord=np.array(chord, order='F')*prop_radius,
-                 twist=np.array(twist, order='F'),
+                 twist=np.array(twist, order='F')-1.2/2,
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
                                        Cl_alpha=Cl_alpha[index],
@@ -106,8 +106,7 @@ wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-wingpropinfo = WingPropInfo(spanwise_discretisation_wing=60,
-                            spanwise_discretisation_propeller=51,
+wingpropinfo = WingPropInfo(spanwise_discretisation_propeller=51,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
                             wing=wing,
@@ -137,10 +136,10 @@ if __name__ == '__main__':
                                 'CP=P/rho*n3*D5', 'eta=J*CT/CP'],
                        sep=',')
 
-    J_experimental = file['J=Vinf/nD'][:36]
-    CT_experimental = file['CT=T/rho*n2*D4'][:36]
-    CP_experimental = file['CP=P/rho*n3*D5'][:36]
-    eta_experimental = file['eta=J*CT/CP'][:36]
+    J_experimental = file['J=Vinf/nD'][:10]
+    CT_experimental = file['CT=T/rho*n2*D4'][:10]
+    CP_experimental = file['CP=P/rho*n3*D5'][:10]
+    eta_experimental = file['eta=J*CT/CP'][:10]
 
     # === Generate numerical data ===
     J_min = np.min(J_experimental)
@@ -174,6 +173,8 @@ if __name__ == '__main__':
     # === Plot results ===
     plt.style.use(niceplots.get_style())
     _, ax = plt.subplots(figsize=(10, 7))
+    
+    
 
     ax.plot(J_numerical, CT_numerical, label=r'Numerical, $C_T$', color='b')
     ax.plot(J_numerical, CP_numerical, label=r'Numerical, $C_P$', color='orange')

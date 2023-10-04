@@ -20,6 +20,7 @@ import numpy as np
 def comaprison_wing(    db_name_isowing: SqliteCaseReader,
                         db_name_isoprop: SqliteCaseReader,
                         db_name_coupled: SqliteCaseReader,
+                        db_name_trim: SqliteCaseReader,
                         wingpropinfo: WingPropInfo,
                         savedir: str,
                         noprop=False)->None:
@@ -44,24 +45,20 @@ def comaprison_wing(    db_name_isowing: SqliteCaseReader,
     
     vlmmesh_ctr_pnts = [0.5*(vlm_mesh[index]+vlm_mesh[index+1]) for index in range(len(vlm_mesh)-1)]
     
-    num_cp = 5
-    mesh_dict = {"num_y": 121,
-        "num_x": 2,
-        "wing_type": "rect",
-        "symmetry": False,
-        "span": wingpropinfo.wing.span,
-        "root_chord": wingpropinfo.wing.chord[0],
-        "num_twist_cp": num_cp
-        }
-    
-    isowingmesh = generate_mesh(mesh_dict)[0, :, 1]
-    isowingmesh_ctr_pnts = [0.5*(isowingmesh[index]+isowingmesh[index+1]) for index in range(len(isowingmesh)-1)]
-    
     # === Wing plotting ===
     Cl_wing_orig_isowing = first_case_isowing.outputs['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     Cl_wing_opt_isowing = last_case_isowing.outputs['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     Cl_wing_opt_coupled = last_case_coupled.outputs['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     
+    # Correct the CL for incorrect normalisation in OAS
+    vinf = 40.
+    v_distr = last_case_coupled.outputs['RETHORST.velocity_distribution']
+    v_distr_ave = np.average(v_distr)
+    v_ratio = vinf**2/v_distr_ave**2
+
+    Cl_wing_opt_coupled = np.multiply(Cl_wing_opt_coupled,
+                                        v_ratio)
+
     try:
         chord_orig = first_case_isowing.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]*0.24
         chord_opt_isowing = last_case_isowing.outputs['OPENAEROSTRUCT.wing.geometry.chord'][0]*0.24
@@ -74,15 +71,28 @@ def comaprison_wing(    db_name_isowing: SqliteCaseReader,
         chord_nodes_opt = [(chord_opt_isowing[index]+chord_opt_isowing[index+1])/2 for index in range(len(chord_opt_isowing)-1)]
         
         chord_opt_coupled = [(chord_opt_coupled[index]+chord_opt_coupled[index+1])/2 for index in range(len(chord_opt_coupled)-1)]
-    
+
     except:
         chord_nodes_orig = np.ones(len(Cl_wing_opt_isowing))
         chord_nodes_opt = np.ones(len(Cl_wing_opt_isowing))
-        
+
     Clc_wing_orig = Cl_wing_orig_isowing*chord_nodes_orig
     Clc_wing_coupled_opt = Cl_wing_opt_coupled*chord_opt_coupled
     Clc_wing_iso_opt = Cl_wing_opt_isowing*chord_nodes_opt
     
+    num_cp = 5
+    mesh_dict = {"num_y": len(Clc_wing_orig)+1,
+        "num_x": 2,
+        "wing_type": "rect",
+        "symmetry": False,
+        "span": wingpropinfo.wing.span,
+        "root_chord": wingpropinfo.wing.chord[0],
+        "num_twist_cp": num_cp
+        }
+    
+    isowingmesh = generate_mesh(mesh_dict)[0, :, 1]
+    isowingmesh_ctr_pnts = [0.5*(isowingmesh[index]+isowingmesh[index+1]) for index in range(len(isowingmesh)-1)]
+
     # Area_ell = 2*sum(Clc_wing_coupled_opt*(vlm_mesh[1:]-vlm_mesh[:-1]))
     # a = span
     # b = Area_ell/(np.pi*a/2)
@@ -152,7 +162,7 @@ def subplots_wingprop(  design_variable_array: np.array, nr_plots: int,
     margin = 1.03
     linewidth = 1.
     fontsize=12
-    y_size = 10
+    y_size = 9
     
     plt.style.use(niceplots.get_style())
     plt.rc('font', size=14)
@@ -167,7 +177,7 @@ def subplots_wingprop(  design_variable_array: np.array, nr_plots: int,
         ymax = np.max([max(original), np.max(optimised_isowing), np.max(optimised_coupled)])*margin
         
         ax[iplot].plot(spanwise[iplot][0], original,
-                label=f'Original', color='Orange', linestyle='dashed', linewidth=linewidth)
+                label=f'Initial, isolated', color='Orange', linestyle='dashed', linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot][1], optimised_isowing,
                 label=f'Optimized, isolated', color='b', linewidth=linewidth)
         ax[iplot].plot(spanwise[iplot][2], optimised_coupled,
@@ -206,7 +216,8 @@ def subplots_wingprop(  design_variable_array: np.array, nr_plots: int,
             np.min(spanwise[iplot][0])*margin,
             np.max(spanwise[iplot][0])*margin)
         )
-        ax[iplot].legend(prop={'size': 9})
+        if iplot==0:
+            ax[iplot].legend(prop={'size': 9})
         niceplots.adjust_spines(ax[iplot], outward=True)
 
     plt.savefig(savepath)
