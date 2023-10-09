@@ -54,14 +54,14 @@ class WingSlipstreamPropOptimisation(om.Group):
             self.connect(f"blade_chord_spline_{propeller_nr}.y",
                          f"HELIX_{propeller_nr}.om_helix.geodef_parametric_0_chord")
 
+        self.add_subsystem('HELIX_COUPLED',
+                           subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
+
         self.add_subsystem('RETHORST',
                            subsys=SlipStreamModel(WingPropInfo=wingpropinfo))
 
         self.add_subsystem('OPENAEROSTRUCT',
                            subsys=WingModelTube(WingPropInfo=wingpropinfo))
-
-        self.add_subsystem('HELIX_COUPLED',
-                           subsys=PropellerCoupled(WingPropInfo=wingpropinfo))
 
         # Outputs
         self.add_subsystem('CONSTRAINTS',
@@ -100,8 +100,6 @@ class WingSlipstreamPropOptimisation(om.Group):
                      'OPENAEROSTRUCT.CT')
         self.connect('PARAMETERS.R',
                      'OPENAEROSTRUCT.R')
-        self.connect('PARAMETERS.W0',
-                     'OPENAEROSTRUCT.W0')
         self.connect('PARAMETERS.speed_of_sound',
                      'OPENAEROSTRUCT.speed_of_sound')
         self.connect('PARAMETERS.load_factor',
@@ -112,6 +110,10 @@ class WingSlipstreamPropOptimisation(om.Group):
                      'OPENAEROSTRUCT.AS_point_0.total_perf.L_equals_W.fuelburn')
         self.connect('PARAMETERS.fuel_mass',
                      'OPENAEROSTRUCT.AS_point_0.total_perf.CG.fuelburn')
+        
+        # HELIX_COUPLED to OPENAEROSTRUCT
+        self.connect('HELIX_COUPLED.weight_total',
+                     'OPENAEROSTRUCT.W0')
 
         # DVs to HELIX
         for index, _ in enumerate(wingpropinfo.propeller):

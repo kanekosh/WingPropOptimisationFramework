@@ -34,7 +34,7 @@ if __name__=='__main__':
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/1313.13086606}
+                    {'scaler': 1/215.21623945}
                 }
 
     design_vars = {
@@ -54,7 +54,7 @@ if __name__=='__main__':
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 2.39817438/2}
+                        {'equals': 2.66699135/2}
                     }
     
     prob = om.Problem()
@@ -74,7 +74,7 @@ if __name__=='__main__':
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.opt_settings = {
     "Major feasibility tolerance": 1.0e-5,
-    "Major optimality tolerance": 1.0e-10,
+    "Major optimality tolerance": 1.0e-5,
     "Minor feasibility tolerance": 1.0-5,
     "Verify level": -1,
     "Function precision": 1.0e-6,

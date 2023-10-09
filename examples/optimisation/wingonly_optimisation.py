@@ -28,21 +28,24 @@ if __name__ == '__main__':
     #             noprop=True)
     # quit()
 
-    PROWIM_wingpropinfo.wing.empty_weight = 10 # to make T=D
-    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    # PROWIM_wingpropinfo.wing.fuel_mass = 0 # to make T=D
-    PROWIM_wingpropinfo.wing.span *= 2
-    # PROWIM_wingpropinfo.wing.chord *= 2
-    PROWIM_wingpropinfo.linear_mesh = True # smoothness of function is determined by this
+    Preq = 0
+    mbat = 4
+    PROWIM_wingpropinfo.wing.empty_weight = mbat + Preq/PROWIM_wingpropinfo.propeller[0].esp # weight model
+    PROWIM_wingpropinfo.wing.CL0 = 0.
+    # PROWIM_wingpropinfo.wing.span *= 1
+    # PROWIM_wingpropinfo.linear_mesh = True
+    # PROWIM_wingpropinfo.__post_init__()
     
-    # PROWIM_wingpropinfo.wing.twist = np.array([-0.31981993,  1.50942036,  3.5180305,   5.75997867,  6.99893059,  6.99893087, 5.75997605,  3.51803336,  1.50942123, -0.3198214])
-    # PROWIM_wingpropinfo.wing.chord =  np.array([0.08378153, 0.08269444, 0.08499097, 0.08143507, 0.0927921,  0.09279211, 0.08143507, 0.08499097, 0.08269444, 0.08378153])
-    
-    PROWIM_wingpropinfo.__post_init__()
+    PROWIM_wingpropinfo.wing.twist = np.array([-0.47012745,  0.57791105,  2.50152062,  4.38360291,  5.9963285 ,
+                                                7.08826306,  7.81453015,  6.49637919,  7.80467608,  7.1034328 ,
+                                                5.98106769,  4.35521603,  2.47558433,  0.55751195, -0.47555508])
+    PROWIM_wingpropinfo.wing.chord =  np.array([0.08329586, 0.08340191, 0.0832217 , 0.08340579, 0.08323511,
+                                                0.08352932, 0.08280204, 0.09805698, 0.08257516, 0.08350386,
+                                                0.08337559, 0.08324213, 0.08337507, 0.08330022, 0.08326784])
     
     objective = {
                 'OPENAEROSTRUCT.AS_point_0.total_perf.D':
-                    {'scaler': 1/9.81879759}
+                    {'scaler': 1/2.66093432}
                 }
 
     design_vars = {
@@ -53,15 +56,11 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.wing.geometry.chord_cp':
                         {'lb': 0.01,
                         'ub': 30,
-                        'scaler': 1},
+                        'scaler': 100},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 3e-3,
                         'ub': 2e-1,
-                        'scaler': 1e2},
-                    # 'PARAMETERS.alpha':
-                    #     {'lb': -10,
-                    #     'ub': 8,
-                    #     'scaler': 1},
+                        'scaler': 1/3e-3}
                     }
 
     constraints = {
@@ -74,6 +73,8 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.AS_point_0.wing_perf.thickness_intersects':
                         {'upper': 0.},
                     'OPENAEROSTRUCT.wing.structural_mass':
+                        {'lower': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.L':
                         {'lower': 0.},
                     }
     
@@ -96,9 +97,9 @@ if __name__ == '__main__':
     prob.driver.options['optimizer'] = 'SNOPT'
     prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'objs']
     prob.driver.opt_settings = {
-    "Major feasibility tolerance": 1.0e-6,
-    "Major optimality tolerance": 1.0e-6,
-    "Minor feasibility tolerance": 1.0e-6,
+    "Major feasibility tolerance": 1.0e-5,
+    "Major optimality tolerance": 1.0e-5,
+    "Minor feasibility tolerance": 1.0e-5,
     "Verify level": -1,
     "Function precision": 1.0e-6,
     # "Major iterations limit": 2,

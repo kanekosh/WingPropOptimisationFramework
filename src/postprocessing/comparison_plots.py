@@ -269,7 +269,8 @@ def subplots_prop(      design_variable_array: np.array, nr_plots: int,
             np.min(spanwise[iplot][0])*margin,
             np.max(spanwise[iplot][0])*margin)
         )
-        ax[iplot].legend(prop={'size': 9})
+        if iplot==0:
+            ax[iplot].legend(prop={'size': 9})
         niceplots.adjust_spines(ax[iplot], outward=True)
 
     plt.savefig(savepath)

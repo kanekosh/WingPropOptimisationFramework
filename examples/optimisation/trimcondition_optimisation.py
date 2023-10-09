@@ -20,21 +20,25 @@ BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
     # Start from 
-    PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 4 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21
     
-    PROWIM_wingpropinfo.wing.chord =  np.array([0.08378153, 0.08269444, 0.08499097, 0.08143507, 0.0927921,  0.09279211, 0.08143507, 0.08499097, 0.08269444, 0.08378153])
-    
-    PROWIM_wingpropinfo.wing.twist = np.array([0.44960395, 2.32915287, 4.02991215, 5.38638886, 5.80512834, 5.38526229, 4.02821597, 2.32803581, 0.44863808])
-    PROWIM_wingpropinfo.wing.chord =  np.array([0.13888889, 0.13888889, 0.13888889, 0.13888889, 0.13888889, 0.13888889, 0.13888889, 0.13888889, 0.13888889])
-    
+    PROWIM_wingpropinfo.wing.twist = np.array([-0.57861226,  0.31019075,  1.98300295,  3.50895936,  5.08440816,
+                                                6.27917302,  7.84406102,  7.02681601,  7.7773402 ,  6.33827094,
+                                                5.10166953,  3.51365803,  1.99177001,  0.31332017, -0.57425951])
+    PROWIM_wingpropinfo.wing.chord =  np.array([0.08333231, 0.08334073, 0.08331503, 0.08335375, 0.08328596,
+                                                0.08350007, 0.0824684 , 0.09730153, 0.08240013, 0.08357395,
+                                                0.08327046, 0.08334107, 0.08333046, 0.08333441, 0.08333284]) 
+    PROWIM_wingpropinfo.wing.thickness = np.array([0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003,
+                                                    0.003, 0.003, 0.003, 0.003, 0.003, 0.003])
+                                                
     for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
-        PROWIM_wingpropinfo.propeller[iprop].rot_rate = 171.88459738
-        PROWIM_wingpropinfo.propeller[iprop].twist = np.array([ 87.26559122, 85.9803259,  84.69048315, 83.43367758, 82.09578977, 81.68560601,
-                                                                80.87243659, 79.9264542,  78.8505612,  77.7751758,  76.65615582, 75.49740754,
-                                                                74.33059008, 73.14727816, 71.94966999, 70.73529006, 69.48583155, 68.16590863,
-                                                                66.75162761, 64.9592756])
+        PROWIM_wingpropinfo.propeller[iprop].rot_rate = 245.01782981
+        PROWIM_wingpropinfo.propeller[iprop].twist = np.array([ 85.55251555, 83.64576076, 81.8520216,  80.09952685, 78.25649516, 77.8377415,
+                                                                76.81006132, 75.58466854, 74.12662243, 72.71758514, 71.24466923, 69.71031773,
+                                                                68.18307205, 66.63252791, 65.08761103, 63.55524488, 61.97682458, 60.31914345,
+                                                                58.52826478, 56.19633768])
                                                                             
     # === Plotting ===
     # db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
@@ -49,18 +53,18 @@ if __name__ == '__main__':
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': -1/(56)}
+                    {'scaler': 1/(112.60310745)}
                 }
 
     design_vars = {
                     'DESIGNVARIABLES.rotor_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060},
+                        'scaler': 1./PROWIM_wingpropinfo.propeller[0].rot_rate},
                     'DESIGNVARIABLES.rotor_1_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060},
+                        'scaler': 1./PROWIM_wingpropinfo.propeller[1].rot_rate},
                     # 'DESIGNVARIABLES.rotor_0_twist':
                     #     {'lb': 0,
                     #     'ub': 90,
@@ -80,11 +84,11 @@ if __name__ == '__main__':
                     # 'DESIGNVARIABLES.chord':
                     #     {'lb': 0,
                     #     'ub': 3,
-                    #     'scaler': 1},
+                        # 'scaler': 1},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 3e-3,
                         'ub': 3e-3,
-                        'scaler': 1e2},
+                        'scaler': 1/3e-3},
                     }
 
     constraints = {
@@ -99,6 +103,8 @@ if __name__ == '__main__':
                     'CONSTRAINTS.thrust_equals_drag':
                         {'equals': 0.},
                     'OPENAEROSTRUCT.wing.structural_mass':
+                        {'lower': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.L':
                         {'lower': 0.},
                     'OPENAEROSTRUCT.AS_point_0.total_perf.D':
                         {'lower': 0.}
@@ -127,11 +133,13 @@ if __name__ == '__main__':
 
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
+    
+    # quit()
 
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
-    prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
+    prob.driver.options['debug_print'] = ['desvars', 'nl_cons', 'objs']
     prob.driver.opt_settings = {
         "Major feasibility tolerance": 1.0e-5,
         "Major optimality tolerance": 1.0e-5,
