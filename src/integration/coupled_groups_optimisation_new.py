@@ -334,7 +334,7 @@ class WingSlipstreamPropOptimisationTest(om.Group):
         
         coupled_OAS_TUBE.nonlinear_solver = om.NonlinearBlockGS(use_aitken=True)
         coupled_OAS_TUBE.nonlinear_solver.options["maxiter"] = 100
-        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-3
+        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-6
         coupled_OAS_TUBE.nonlinear_solver.options["rtol"] = 1e-30
         coupled_OAS_TUBE.nonlinear_solver.options["iprint"] = 2
         coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = False

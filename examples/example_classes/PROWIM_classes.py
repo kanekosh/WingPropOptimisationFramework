@@ -62,7 +62,6 @@ PROWIM_prop_1 = PropInfo(   label='Prop1',
                             ref_point=ref_point,
                             local_refinement=prop_refinement,
                             rotation_direction=-1,
-                            prop_angle=45
                             )
 
 PROWIM_prop_2 = PropInfo(label='Prop1',
@@ -81,7 +80,6 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                  ref_point=ref_point,
                  local_refinement=prop_refinement,
                  rotation_direction=1,
-                 prop_angle=45
                  )
 
 
