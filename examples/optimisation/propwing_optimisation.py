@@ -20,23 +20,22 @@ BASE_DIR = Path(__file__).parents[0]
 
 if __name__ == '__main__':
     # Start from 
-    PROWIM_wingpropinfo.wing.empty_weight = 2 # to make T=D
+    PROWIM_wingpropinfo.wing.empty_weight = 4 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21
     
-    PROWIM_wingpropinfo.wing.twist = np.array([-1.25865721, -0.45725257,  0.65422908,  1.70931064,  2.57777181,
-                                                3.05298624,  3.39002958,  3.0529862 ,  2.57777187,  1.70931056,
-                                                0.65422926, -0.45725286, -1.25865693])
-    PROWIM_wingpropinfo.wing.chord =  np.array([0.08333333, 0.08333333, 0.08333333, 0.08333333, 0.08333333,
-                                                0.08333333, 0.08333333, 0.08333333, 0.08333333, 0.08333333,
-                                                0.08333333, 0.08333333, 0.0833333])
-    
+    PROWIM_wingpropinfo.wing.twist = np.array([-0.46449103,  0.59262155,  2.52644791,  4.41827328,  6.03133641,
+                                                7.12311048,  7.8495755 ,  6.53179668,  7.83959416,  7.13808015,
+                                                6.01575541,  4.38942103,  2.50011456,  0.57197008, -0.47001715])
+    PROWIM_wingpropinfo.wing.chord =  np.array([0.08333331, 0.08333353, 0.08333255, 0.08333556, 0.08332314,
+                                                0.08340374, 0.08279963, 0.09822044, 0.08279963, 0.08340374,
+                                                0.08332314, 0.08333556, 0.08333255, 0.08333353, 0.08333331])
+                                                
     for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
-        PROWIM_wingpropinfo.propeller[iprop].rot_rate = 230.0476
-        PROWIM_wingpropinfo.propeller[iprop].twist = np.array([ 85.83994569, 84.13571425, 82.42911816, 80.77826907, 79.01097771, 78.61916379,
-                                                                77.61554485, 76.44706709, 75.07820051, 73.72439922, 72.31022309, 70.84585741,
-                                                                69.38616929, 67.9114225,  66.43057136, 64.94354747, 63.42398014, 61.82089418,
-                                                                60.09301686, 57.8621155])
+        PROWIM_wingpropinfo.propeller[iprop].rot_rate = 244.68179184
+        PROWIM_wingpropinfo.propeller[iprop].twist = np.array([ 85.42133744, 83.78989181, 81.90467817, 80.11006664, 78.65620662,
+                                                                77.34008956, 77.22522702, 74.78657488, 74.66329572, 72.81191379,
+                                                                70.5673611 , 70.82226808, 66.86461581, 67.74485409, 64.26294555,
+                                                                63.82034587, 62.18677825, 59.68273323, 59.69917405, 55.07547007])
                                                                             
     # === Plotting ===
     # db_name = os.path.join(BASE_DIR, 'results', 'data_wingprop.db')
@@ -51,18 +50,18 @@ if __name__ == '__main__':
     
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/(2*32.17610257)}
+                    {'scaler': 1/112}
                 }
 
     design_vars = {
                     'DESIGNVARIABLES.rotor_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060},
+                        'scaler': 1./244.68179184},
                     'DESIGNVARIABLES.rotor_1_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060},
+                        'scaler': 1./244.68179184},
                     'DESIGNVARIABLES.rotor_0_twist':
                         {'lb': 0,
                         'ub': 90,
@@ -82,11 +81,11 @@ if __name__ == '__main__':
                     'DESIGNVARIABLES.chord':
                         {'lb': 0,
                         'ub': 3,
-                        'scaler': 1},
+                        'scaler': 1/0.083},
                     'OPENAEROSTRUCT.wing.thickness_cp':
                         {'lb': 3e-3,
                         'ub': 5e-1,
-                        'scaler': 1e2},
+                        'scaler': 1/3e-3},
                     }
 
     constraints = {
@@ -105,6 +104,10 @@ if __name__ == '__main__':
                     'OPENAEROSTRUCT.wing.structural_mass':
                         {'lower': 0.},
                     'OPENAEROSTRUCT.AS_point_0.total_perf.D':
+                        {'lower': 0.},
+                    'OPENAEROSTRUCT.AS_point_0.total_perf.L':
+                        {'lower': 0.},
+                    'OPENAEROSTRUCT.W0':
                         {'lower': 0.}
                     }
 
@@ -120,12 +123,12 @@ if __name__ == '__main__':
 
         # Check derivatives  
     if False:
-        prob.check_totals(  compact_print=True, show_only_incorrect=True,
-                        form='central', step=1e-8, 
-                        rel_err_tol=1e-3)
-        # prob.check_partials(compact_print=True, show_only_incorrect=True, 
-        #                             excludes=['*HELIX_0*', '*HELIX_1*'], 
-        #                             form='central', step=1e-8)
+        # prob.check_totals(  compact_print=True, show_only_incorrect=True,
+        #                 form='central', step=1e-8, 
+        #                 rel_err_tol=1e-3)
+        prob.check_partials(compact_print=True, show_only_incorrect=True, 
+                                    includes=['*HELIX_COUPLED*'],
+                                    form='central', step=1e-8)
         
         quit()
 

@@ -21,6 +21,8 @@ class PropellerCoupled(om.ExplicitComponent):
     def setup(self):
         # === Options ===
         self.wingpropinfo = self.options["WingPropInfo"]
+        self.Pisolated = 56.57407795*2
+        self.mbat_iso = 4
         
         # === Inputs ===
         for propeller_nr in range(self.wingpropinfo.nr_props):
@@ -31,6 +33,7 @@ class PropellerCoupled(om.ExplicitComponent):
         # === Outputs ===
         self.add_output('thrust_total', shape=1)
         self.add_output('power_total', shape=1)
+        self.add_output('weight_total', shape=1)
         
         # === Partials ===
         for propeller_nr in range(self.wingpropinfo.nr_props):
@@ -38,9 +41,12 @@ class PropellerCoupled(om.ExplicitComponent):
                                     rows=[0], cols=[3*TIME_STEPS_HELIX-1], val=1)
             self.declare_partials('power_total', f'power_prop_{propeller_nr}', 
                                     rows=[0], cols=[0], val=1)
+            self.declare_partials('weight_total', f'power_prop_{propeller_nr}', 
+                                    rows=[0], cols=[0], val=0)#1/self.wingpropinfo.propeller[0].esp + self.mbat_iso/self.Pisolated)
         
     def compute(self, inputs, outputs):
         thrust, power = [], []
+        ESP = self.wingpropinfo.propeller[0].esp
         
         for propeller_nr in range(self.wingpropinfo.nr_props):
             thrust.append(inputs[f'thrust_prop_{propeller_nr}'][2, TIME_STEPS_HELIX-1]) # only last entries contain the value
@@ -48,7 +54,8 @@ class PropellerCoupled(om.ExplicitComponent):
             
         outputs['thrust_total'] = np.sum(thrust)
         outputs['power_total'] = np.sum(power)
-
+        battery_weight = outputs['power_total']/self.Pisolated * self.mbat_iso
+        outputs['weight_total'] = self.wingpropinfo.wing.empty_weight #+ outputs['power_total']/ESP + battery_weight
 
 class PropellerModel(om.Group):
     def initialize(self):

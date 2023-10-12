@@ -27,10 +27,12 @@ if __name__ == '__main__':
     #             savedir=savepath)
     # quit()
 
-    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
+    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 15 # to make T=D
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
+    PROWIM_wingpropinfo.gamma_tangential_dx = 0.1
+    PROWIM_wingpropinfo.wing.youngsmodulus=1e16
+    PROWIM_wingpropinfo.wing.G=1e16
     PROWIM_wingpropinfo.NO_CORRECTION = True
     
     for index in range(len(PROWIM_wingpropinfo.propeller)):
@@ -41,7 +43,6 @@ if __name__ == '__main__':
                                                                 24.02241404, 21.16428954],
                                                                 order='F'
                                                             )
-        PROWIM_wingpropinfo.propeller[index].prop_angle = 45
         # PROWIM_wingpropinfo.propeller[index].rotation_direction = 1
 
     PROWIM_wingpropinfo.__post_init__()
@@ -116,30 +117,36 @@ if __name__ == '__main__':
     # lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     
     # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
-    PROWIM_wingpropinfo.force = np.linspace(10, 11, 76)
+    PROWIM_wingpropinfo.force = np.linspace(10.9, 11, 76)
+    PROWIM_wingpropinfo.youngsmodulus = 1e16,
+    PROWIM_wingpropinfo.G = 1e16
     PROWIM_wingpropinfo.__post_init__()
 
     prob = om.Problem()
     prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
-                                                objective=objective,
-                                                constraints=constraints,
-                                                design_vars=design_vars)
+                                                    objective=objective,
+                                                    constraints=constraints,
+                                                    design_vars=design_vars)
 
     # === Analysis ===
     prob.setup()
     prob.run_model()
     
-    prob.check_partials(compact_print=False,
-                        show_only_incorrect=True,
-                        includes=[
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
-                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
-                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
-                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
-                                  ])
-    
-    quit()
-    
+    if True:
+        partials= prob.check_partials(compact_print=False,
+                                        show_only_incorrect=True,
+                                        includes=[
+                                                # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
+                                                # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
+                                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
+                                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
+                                                ],
+                                        step=1e-6,
+                                        form='central',
+                                        rel_err_tol=1e-4)
+        
+        quit()
+        
     lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
     
     wingspan = PROWIM_wingpropinfo.vlm_mesh_control_points
@@ -175,7 +182,7 @@ if __name__ == '__main__':
         ax[index].plot(wingspan, veldistr)       
         ax[index].set_ylabel(ylabel)
         niceplots.adjust_spines(ax[index], outward=True)
-        ax[index].set_ylim(min(veldistr)*1.1, max(veldistr)/0.9)
+        # ax[index].set_ylim(min(veldistr)*1.1, max(veldistr)/0.9)
 
     plt.savefig('vel_distr.png')
     
@@ -209,8 +216,8 @@ if __name__ == '__main__':
         "Function precision": 1.0e-6,
         "Major iterations limit": 0,
         "Nonderivative linesearch": None,
-        "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop.out'),
-        "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wingprop.out')
+        "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop_tube.out'),
+        "Summary file": os.path.join(BASE_DIR, 'results', 'optimisation_summary_wingprop_tube.out')
     }
     
     # prob.check_totals(  compact_print=True, show_only_incorrect=True,

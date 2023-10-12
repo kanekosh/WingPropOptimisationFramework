@@ -63,6 +63,8 @@ class PropInfo:
     airfoils: list[AirfoilInfo]
     prop_angle: float = 0.
     rotation_direction: int = 1 # 1 for cw, -11 for ccw
+    
+    esp: float = 5920 # W/kg
 
     rotation_axis: np.array = np.array([0., 0., 1.])
     ref_point: np.array = np.array([0., 0., 0.])

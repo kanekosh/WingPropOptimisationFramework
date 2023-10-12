@@ -34,7 +34,7 @@ wing_chord = 0.24*2
 wingspan = 0.73*2.*0.952
 
 prop_refinement = 4
-num_cp = 13 # wing
+num_cp = 15 # wing
 
 spanwise_discretisation_propeller_BEM = len(span)
 
@@ -62,7 +62,6 @@ PROWIM_prop_1 = PropInfo(   label='Prop1',
                             ref_point=ref_point,
                             local_refinement=prop_refinement,
                             rotation_direction=-1,
-                            prop_angle=45
                             )
 
 PROWIM_prop_2 = PropInfo(label='Prop1',
@@ -81,7 +80,6 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                  ref_point=ref_point,
                  local_refinement=prop_refinement,
                  rotation_direction=1,
-                 prop_angle=45
                  )
 
 
@@ -95,7 +93,8 @@ PROWIM_wing = WingInfo( label='PROWIM_wing',
                         empty_weight=10.,
                         CL0 = 0.283, # if you want to do optimization set this to zero bcs otherwise OAS will return erroneous results
                         CD0=0.025,
-                        fuel_mass=0
+                        fuel_mass=0,
+
                         )
 
 
