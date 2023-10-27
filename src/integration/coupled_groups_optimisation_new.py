@@ -327,6 +327,7 @@ class WingSlipstreamPropOptimisationTest(om.Group):
                                                                 propeller_tipradii=[wingpropinfo.propeller[index].prop_radius[-1] for index in range(wingpropinfo.nr_props)],
                                                                 propeller_local_refinement=wingpropinfo.propeller[0].local_refinement,
                                                                 gamma_tangential_dx=wingpropinfo.gamma_tangential_dx,
+                                                                gamma_dphi=wingpropinfo.gamma_dphi,
                                                                 gamma_tangential_x=wingpropinfo.gamma_tangential_x,
                                                                 propeller_discretisation_BEM=wingpropinfo.spanwise_discretisation_propeller_BEM,
                                                                 propeller_discretisation=wingpropinfo.spanwise_discretisation_propeller,
@@ -334,7 +335,7 @@ class WingSlipstreamPropOptimisationTest(om.Group):
         
         coupled_OAS_TUBE.nonlinear_solver = om.NonlinearBlockGS(use_aitken=True)
         coupled_OAS_TUBE.nonlinear_solver.options["maxiter"] = 100
-        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-6
+        coupled_OAS_TUBE.nonlinear_solver.options["atol"] = 1e-2 #TODO: why does it perform so bad for certain angles+advance ratios
         coupled_OAS_TUBE.nonlinear_solver.options["rtol"] = 1e-30
         coupled_OAS_TUBE.nonlinear_solver.options["iprint"] = 2
         coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = False
@@ -439,7 +440,7 @@ class WingSlipstreamPropOptimisationTest(om.Group):
             # Tube model
             self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_radii",
                          f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_radii_BEM_rotor0")
-            self.connect(f"PARAMETERS.force_distr", # f"HELIX_{index}.om_helix.rotorcomp_0_f_a", # PARAMETERS.force_distr #
+            self.connect(f"HELIX_{index}.om_helix.rotorcomp_0_f_a", # f"HELIX_{index}.om_helix.rotorcomp_0_f_a", # PARAMETERS.force_distr #
                          f"TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_{index}.propeller_force_BEM_rotor0")
 
         # HELIX to HELIX_COUPLED
@@ -450,7 +451,7 @@ class WingSlipstreamPropOptimisationTest(om.Group):
                          f"HELIX_COUPLED.power_prop_{index}")
 
         # RETHORST to OPENAEROSTRUCT
-        self.connect("PARAMETERS.velocity_distribution", # RETHORST
+        self.connect("RETHORST.velocity_distribution", # RETHORST
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.velocity_distribution")
         self.connect("RETHORST.correction_matrix",
                      "OPENAEROSTRUCT.AS_point_0.coupled.aero_states.rethorst_correction")
@@ -461,8 +462,8 @@ class WingSlipstreamPropOptimisationTest(om.Group):
                         f'TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_biotsavart_{index}.collocation_points')
         
         # TUBEMODEL to OPENAEROSTRUCT
-        self.connect('TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector',
-                     'OPENAEROSTRUCT.AS_point_0.coupled.aero_states.induced_velocity_vector')
+        # self.connect('TUBEMODEL.TUBEMODEL_velocity_output.velocity_vector',
+        #              'OPENAEROSTRUCT.AS_point_0.coupled.aero_states.induced_velocity_vector')
         
         # OPENAEROSTRUCT to CONSTRAINTS
         self.connect('OPENAEROSTRUCT.AS_point_0.total_perf.D',

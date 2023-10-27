@@ -20,14 +20,15 @@ class DesignVariables(om.IndepVarComp):
         # Propeller Design Variables
         for index, _ in enumerate(wingpropinfo.propeller):
             self.add_output(f"rotor_{index}_twist", val=wingpropinfo.propeller[index].twist)
+            self.add_output(f"rotor_{index}_pitch", val=wingpropinfo.propeller[index].pitch)
             self.add_output(f"rotor_{index}_chord", val=wingpropinfo.propeller[index].chord)
             self.add_output(f"rotor_{index}_rot_rate", val=wingpropinfo.propeller[index].rot_rate)
         
         # Wing Design Variables
         self.add_output("span", val=wingpropinfo.wing.span, units="m")
         self.add_output("twist", val=wingpropinfo.wing.twist, units="deg")
-        # self.add_output("chord", val=np.ones(len(wingpropinfo.wing.chord)), units="m")
-        self.add_output("chord", val=wingpropinfo.wing.chord, units="m")
+        self.add_output("chord", val=np.ones(len(wingpropinfo.wing.chord)), units="m")
+        # self.add_output("chord", val=wingpropinfo.wing.chord, units="m")
         
         # === Aero optimized starting point ===
         # self.add_output("span", val=wingpropinfo.wing.span, units="m")

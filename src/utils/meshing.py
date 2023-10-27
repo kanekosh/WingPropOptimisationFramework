@@ -1,7 +1,6 @@
 # --- Built-ins ---
 
 # --- Internal ---
-from RethorstCorrection_pyf90.mod_vlm_mesh import vlm_mesh
 
 # --- External ---
 import numpy as np

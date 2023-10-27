@@ -21,7 +21,7 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
 # === Read in PROWIM data ===
-with open(os.path.join(BASE_DIR, 'data', 'PROWIM.json'), 'r') as file:
+with open(os.path.join(BASE_DIR, 'data', 'rotor_40.json'), 'r') as file:
     data = json.load(file)
 
 prop_radius = 0.1185
@@ -49,7 +49,7 @@ prop1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
                  nr_blades=4,
                  rot_rate=300.,
-                 chord=np.array(chord, order='F')*prop_radius,
+                 chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F')-1.2/2,
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
@@ -69,7 +69,7 @@ prop2 = PropInfo(label='Prop1',
                  prop_location=0.332,
                  nr_blades=4,
                  rot_rate=300.,
-                 chord=np.array(chord, order='F')*prop_radius,
+                 chord=np.array(chord, order='F'),
                  twist=np.array(twist, order='F')-1.2/2,
                  span=np.array(span, order='F'),
                  airfoils=[AirfoilInfo(label=f'Foil_{index}',
@@ -153,6 +153,7 @@ if __name__ == '__main__':
     prob = om.Problem()
 
     for index_rotational, irot_rate in enumerate(rot_rate):
+        print(irot_rate)
         for index_prop in range(wingpropinfo.nr_props):
             wingpropinfo.propeller[index_prop].rot_rate = irot_rate
 

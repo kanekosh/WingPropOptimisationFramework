@@ -42,10 +42,10 @@ if __name__=='__main__':
                         {'lb': 0,
                         'ub': 90,
                         'scaler': 1./10},
-                    'HELIX_0.om_helix.geodef_parametric_0_rot_rate':
-                        {'lb': 0,
-                        'ub': 3000,
-                        'scaler': 1./1060},
+                    # 'HELIX_0.om_helix.geodef_parametric_0_rot_rate':
+                    #     {'lb': 0,
+                    #     'ub': 3000,
+                    #     'scaler': 1./1060},
                     # 'DESIGNVARIABLES.rotor_0_chord':
                     #     {'lb': -np.inf,
                     #     'ub': np.inf,
@@ -54,7 +54,7 @@ if __name__=='__main__':
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 2.66699135/2}
+                        {'equals': 5}
                     }
     
     prob = om.Problem()

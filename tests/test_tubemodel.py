@@ -27,23 +27,21 @@ if __name__ == '__main__':
     #             savedir=savepath)
     # quit()
 
-    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 15 # to make T=D
+    PROWIM_wingpropinfo.spanwise_discretisation_propeller = 13 # to make T=D
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
     PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
     PROWIM_wingpropinfo.gamma_tangential_dx = 0.1
     PROWIM_wingpropinfo.wing.youngsmodulus=1e16
     PROWIM_wingpropinfo.wing.G=1e16
-    PROWIM_wingpropinfo.NO_CORRECTION = True
+    PROWIM_wingpropinfo.NO_CORRECTION = False
+    PROWIM_wingpropinfo.force = np.zeros(76)
     
     for index in range(len(PROWIM_wingpropinfo.propeller)):
-        PROWIM_wingpropinfo.propeller[index].rot_rate = 1120.14159572
-        PROWIM_wingpropinfo.propeller[index].twist = np.array([ 67.87061616, 61.89262009, 56.4568298,  51.87830046, 47.14861896, 48.24362368,
-                                                                45.9118566,  43.80572937, 41.47751692, 39.32536837, 37.22149041, 35.11703952,
-                                                                33.28665179, 31.58342076, 29.98635087, 28.56331731, 27.15163666, 25.72162575,
-                                                                24.02241404, 21.16428954],
-                                                                order='F'
-                                                            )
-        # PROWIM_wingpropinfo.propeller[index].rotation_direction = 1
+        PROWIM_wingpropinfo.propeller[index].rot_rate = 1060
+        PROWIM_wingpropinfo.propeller[index].twist = np.array([ 67.20825134, 61.01531338, 55.52115905, 50.70011031, 46.54195678, 41.28970741,
+                                                                37.49211551, 34.56964193, 32.0884532,  29.94856091, 28.10354481, 26.48669457,
+                                                                25.07074381, 23.80806013, 22.69461815, 21.71183634, 20.86579719, 20.16675169,
+                                                                19.61528706, 19.43809687])
 
     PROWIM_wingpropinfo.__post_init__()
     
@@ -96,30 +94,23 @@ if __name__ == '__main__':
                         {'equals': 0.}
                     }
     
-    # optimisation_arch = MainWingPropOptimisation(wingpropinfo=PROWIM_wingpropinfo,
-    #                                              objective=objective,
-    #                                              constraints=constraints,
-    #                                              design_variables=design_vars,
-    #                                              database_savefile='.',
-    #                                              result_dir='.')
-    
     
     prob = om.Problem()
     prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
                                                 objective=objective,
                                                 constraints=constraints,
                                                 design_vars=design_vars)
-
+    
     # === Analysis ===
     # prob.setup()
     # prob.run_model()
-    
+
     # lift_coefficient_withoutprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
-    
-    # PROWIM_wingpropinfo.spanwise_discretisation_propeller = 21 # to make T=D
-    PROWIM_wingpropinfo.force = np.linspace(10.9, 11, 76)
-    PROWIM_wingpropinfo.youngsmodulus = 1e16,
-    PROWIM_wingpropinfo.G = 1e16
+
+    def parabola(x): return 5-x**2
+
+    PROWIM_wingpropinfo.gamma_dphi = 5
+    PROWIM_wingpropinfo.force = parabola(x=np.linspace(-1, 1, 76))
     PROWIM_wingpropinfo.__post_init__()
 
     prob = om.Problem()
@@ -132,19 +123,18 @@ if __name__ == '__main__':
     prob.setup()
     prob.run_model()
     
-    if True:
+    if False:
         partials= prob.check_partials(compact_print=False,
                                         show_only_incorrect=True,
                                         includes=[
                                                 # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
-                                                # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
+                                                '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
                                                 #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
-                                                  '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
+                                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
                                                 ],
-                                        step=1e-6,
+                                        step=1e-8,
                                         form='central',
-                                        rel_err_tol=1e-4)
-        
+                                        rel_err_tol=1e-3)
         quit()
         
     lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']

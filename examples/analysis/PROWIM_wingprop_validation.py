@@ -104,8 +104,7 @@ wing = WingInfo(label='PROWIM_wing',
                 )
 
 
-wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
-                            spanwise_discretisation_propeller=21,
+wingpropinfo = WingPropInfo(spanwise_discretisation_propeller=21,
                             spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
                             propeller=[prop1, prop2],
                             wing=wing,

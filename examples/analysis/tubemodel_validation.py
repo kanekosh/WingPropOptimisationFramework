@@ -8,8 +8,9 @@ import json
 from src.base import ParamInfo, WingPropInfo, WingInfo, PropInfo, AirfoilInfo
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_wing
-from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisation
-# from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo
+from src.integration.coupled_groups_optimisation_new import WingSlipstreamPropOptimisationTest
+from src.integration.coupled_groups_optimisation import WingSlipstreamPropOptimisation
+from src.integration.coupled_groups_analysis import WingSlipstreamPropAnalysis
 
 # --- External ---
 import openmdao.api as om
@@ -45,7 +46,6 @@ wingspan = 0.73*2.*0.952
 air_density = 1.2087
 
 spanwise_discretisation_propeller_BEM = len(span)
-
 
 prop1 = PropInfo(label='Prop1',
                  prop_location=-0.332,
@@ -89,8 +89,8 @@ prop2 = PropInfo(label='Prop1',
 
 parameters = ParamInfo(vinf=40.,
                        wing_aoa=0.,
-                       mach_number=40/333.,
-                       reynolds_number=450_000,
+                       mach_number=0.2,
+                       reynolds_number=640_000,
                        speed_of_sound=333.4,
                        air_density=air_density)
 
@@ -104,18 +104,18 @@ wing = WingInfo(label='PROWIM_wing',
                 thickness=np.ones(spanwise_discretisation_propeller_BEM,
                               order='F')*0.01,
                 empty_weight=0.,
-                CL0 = 0.283,
-                CD0=0.021,
+                # CL0 = 0.27,
+                # CD0 = 0.0206
                 )
 
 
-PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_wing=33,
-                            spanwise_discretisation_propeller=15,
-                            spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
-                            propeller=[prop1, prop2],
-                            wing=wing,
-                            parameters=parameters
-                            )
+PROWIM_wingpropinfo = WingPropInfo(spanwise_discretisation_propeller=17,
+                                    gamma_dphi=10,
+                                    spanwise_discretisation_propeller_BEM=spanwise_discretisation_propeller_BEM,
+                                    propeller=[prop1, prop2],
+                                    wing=wing,
+                                    parameters=parameters
+                                    )
 
 if __name__ == '__main__':
     # === Load in (experimental) validation data ===
@@ -162,16 +162,14 @@ if __name__ == '__main__':
     Vinf = validationsetup_data['Vinf'][0]
     qinf = 0.5*rhoinf*Vinf**2
 
-    angles = np.linspace(-5, 15, 5)
+    angles = np.linspace(-10, 15, 10)
     
     # === Setup PROWIM test case ===
     PROWIM_wingpropinfo.wing.empty_weight = 5 # to make T=D
-    PROWIM_wingpropinfo.wing.CL0 = 0. # to make T=D
-    PROWIM_wingpropinfo.gamma_tangential_dx = 0.3
-    PROWIM_wingpropinfo.NO_CORRECTION = False
-    PROWIM_wingpropinfo.NO_PROPELLER = False
+    PROWIM_wingpropinfo.gamma_tangential_dx = 0.1
+    PROWIM_wingpropinfo.gamma_dphi = 10
     
-    J = np.array([0.696, 0.796, 0.8960, float('nan')])
+    J = np.array([0.696, 0.796, 0.896])#, 0.696, 0.8960, float('nan')])
     rot_rate = (PROWIM_wingpropinfo.parameters.vinf/(J*2.*prop_radius)) * 2.*np.pi # in rad/s
     
     for iprop, _ in enumerate(PROWIM_wingpropinfo.propeller):
@@ -180,9 +178,9 @@ if __name__ == '__main__':
     PROWIM_wingpropinfo.__post_init__()
     
     plt.style.use(niceplots.get_style())
-    _, ax = plt.subplots(figsize=(10, 7))
+    _, ax = plt.subplots(1, figsize=(12, 9))
     
-    for irot_rate, num, thrust_div in zip(rot_rate, [7, 8, 9]):
+    for index, (irot_rate, num) in enumerate(zip(rot_rate, [7, 8, 9])):#, 8, 9]):
     # for irot_rate, num in zip([rot_rate[0]], [7]):
         T, D, CL, CX, CD = [], [], [], [], []
     
@@ -196,13 +194,30 @@ if __name__ == '__main__':
         
         for angle in angles:
             print(f'Angle of attack: {angle: ^10}')
+            if J[index]==0.696:
+                PROWIM_wingpropinfo.NO_CORRECTION=False
+                PROWIM_wingpropinfo.NO_PROPELLER=False
+                # PROWIM_wingpropinfo.wing.CL0 = 0.25#3227
+                PROWIM_wingpropinfo.wing.CD0 = 0.015
+                
+            elif J[index]==0.796:
+                PROWIM_wingpropinfo.NO_CORRECTION=False
+                PROWIM_wingpropinfo.NO_PROPELLER=False
+                # PROWIM_wingpropinfo.wing.CL0 = 0.25#3079
+                PROWIM_wingpropinfo.wing.CD0 = 0.015
+                
+            elif J[index]==0.896:
+                PROWIM_wingpropinfo.NO_CORRECTION=False
+                PROWIM_wingpropinfo.NO_PROPELLER=False
+                # PROWIM_wingpropinfo.wing.CL0 = 0.25#2938
+                PROWIM_wingpropinfo.wing.CD0 = 0.015
             PROWIM_wingpropinfo.parameters.wing_aoa = angle
 
             prob = om.Problem()
-            prob.model = WingSlipstreamPropOptimisation(WingPropInfo=PROWIM_wingpropinfo,
-                                                        objective={},
-                                                        constraints={},
-                                                        design_vars={})
+            prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
+                                                            objective={},
+                                                            constraints={},
+                                                            design_vars={})
 
             # === Analysis ===
             prob.setup()
@@ -216,20 +231,38 @@ if __name__ == '__main__':
             CD.append(prob['OPENAEROSTRUCT.AS_point_0.total_perf.CD'])
             cx = (D-T)/(qinf*S_ref)
             CX.append(cx)
+            
+            # Cl = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']
+            # spanwwise = np.linspace(-0.5, 0.5, len(Cl))
+            # plt.plot(spanwwise, Cl)
+            # plt.show()
+            
+            # quit()
         
-        # ax.plot(angles, T, label=r'$T$', color='b')
-        # ax.plot(angles, D, label=r'$D$', color='orange')
+        # ax[0].plot(angles, T, label=r'$T$', color='b')
+        # ax[0].plot(angles, D, label=r'$D$', color='orange')
         ax.scatter(CX_validation, CL_validation, label=f'Exp., J=0.{num}')
         ax.plot(CX, CL, label=f'Num., J=0.{num}', linestyle='dashed')
         ax.set_ylabel(r'$C_L (-)$')
         ax.set_xlabel(r'$C_X (-)$')
         ax.set_ylim((-0.4, 1.6))
-        ax.set_xlim((-0.2, 0.))
+        ax.set_xlim((-0.2, 0.1))
         ax.legend()
+        
+        # ax[1].plot(angles, CL, label=f'Num, J=0.{num}')
+        # ax[1].scatter(aoa, CL_J0796, label=f'Exp, J=0.7')
+        # ax[1].set_ylabel(r'$C_L (-)$')
+        # ax[1].set_xlabel(r'$AoA (deg)$')
+        # # ax[0].set_ylim((-0.4, 1.6))
+        # # ax[0].set_xlim((-0.2, 0.))
+        # ax[1].legend()
     
     niceplots.adjust_spines(ax, outward=True)
+    # niceplots.adjust_spines(ax[1], outward=True)
     
     plt.savefig(os.path.join(BASE_DIR, 'figures', 'TUBE_PROWIM_VALIDATION.png'))
     
     plt.clf()
     plt.close()
+    
+    print(angles, CL)

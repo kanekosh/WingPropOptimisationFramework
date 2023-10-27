@@ -62,6 +62,7 @@ class PropInfo:
     span: np.array
     airfoils: list[AirfoilInfo]
     prop_angle: float = 0.
+    pitch: float = 0.
     rotation_direction: int = 1 # 1 for cw, -11 for ccw
     
     esp: float = 5920 # W/kg
@@ -106,6 +107,7 @@ class WingPropInfo:
     # Parameters for tube model
     gamma_tangential_dx: float = 0.3 # make sure that this values doesn't place a vortex ring too close to a collocation point: at 75% of chord
     gamma_tangential_x: float = 1.0 # should be a few times larger than the chord length!
+    gamma_dphi: int = 10 # radial discretisation of wake
     
     force: np.array = np.zeros(1)
     
