@@ -97,9 +97,9 @@ if __name__ == '__main__':
     
     prob = om.Problem()
     prob.model = WingSlipstreamPropOptimisationTest(WingPropInfo=PROWIM_wingpropinfo,
-                                                objective=objective,
-                                                constraints=constraints,
-                                                design_vars=design_vars)
+                                                    objective=objective,
+                                                    constraints=constraints,
+                                                    design_vars=design_vars)
     
     # === Analysis ===
     # prob.setup()
