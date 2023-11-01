@@ -123,18 +123,27 @@ if __name__ == '__main__':
     prob.setup()
     prob.run_model()
     
-    if False:
-        partials= prob.check_partials(compact_print=False,
+    if True:
+        partials= prob.check_partials(compact_print=True,
                                         show_only_incorrect=True,
                                         includes=[
                                                 # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_velocity_output*',
-                                                '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
+                                                # '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_forceinterpolation_0*',
                                                 #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_KuttaJoukowski_0*',
-                                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_circulations_0*'
+                                                #   '*COUPLED_OAS_TUBE.TUBEMODEL.TUBEMODEL_coupled.TUBEMODEL_biotsavart_0*'
+                                                '*OPENAEROSTRUCT.wing*',
+                                                '*CONSTRAINTS*',
+                                                '*OPENAEROSTRUCT.AS_point_0.total_perf*',
+                                                '*COUPLED_OAS_TUBE.OPENAEROSTRUCT.AS_point_0.wing_perf.struct_funcs.failure*',
+                                                
                                                 ],
                                         step=1e-8,
                                         form='central',
                                         rel_err_tol=1e-3)
+        # prob.check_totals(compact_print=True,
+        #                   show_only_incorrect=True,
+        #                   step=1e-8,
+        #                 form='central',)
         quit()
         
     lift_coefficient_withprop = prob['OPENAEROSTRUCT.AS_point_0.wing_perf.Cl']

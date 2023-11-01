@@ -340,8 +340,8 @@ class WingSlipstreamPropOptimisationTest(om.Group):
         coupled_OAS_TUBE.nonlinear_solver.options["iprint"] = 2
         coupled_OAS_TUBE.nonlinear_solver.options["err_on_non_converge"] = False
 
-        coupled_OAS_TUBE.linear_solver = om.NonlinearBlockGS(use_aitken=True)
-        coupled_OAS_TUBE.options["assembled_jac_type"] = "csc"
+        # coupled_OAS_TUBE.linear_solver = om.NonlinearBlockGS(use_aitken=True)
+        # coupled_OAS_TUBE.options["assembled_jac_type"] = "csc"
         
         self.add_subsystem('COUPLED_OAS_TUBE',
                            subsys=coupled_OAS_TUBE,
