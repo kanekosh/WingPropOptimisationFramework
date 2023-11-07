@@ -1,5 +1,5 @@
 # --- Built-ins ---
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 
 # --- Internal ---
@@ -40,7 +40,7 @@ class WingInfo:
     thickness: np.array
     empty_weight: float
     load_factor: float = 1.
-    empty_cg: np.array = np.zeros((3))
+    empty_cg: np.array = field(default_factory=lambda: np.zeros((3)))
     CL0: float = 0.
     fuel_mass: float = 0. # we fly eletric
 
@@ -58,9 +58,9 @@ class PropInfo:
     airfoils: list[AirfoilInfo]
     prop_angle: float = 0.
 
-    rotation_axis: np.array = np.array([0., 0., 1.])
-    ref_point: np.array = np.array([0., 0., 0.])
-    hub_orientation: np.array = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    rotation_axis: np.array = field(default_factory=lambda: np.array([0., 0., 1.]))
+    ref_point: np.array = field(default_factory=lambda: np.array([0., 0., 0.]))
+    hub_orientation: np.array = field(default_factory=lambda: np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]))
     
     local_refinement: int = 2
 
