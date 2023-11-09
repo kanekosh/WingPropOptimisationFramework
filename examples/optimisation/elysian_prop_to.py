@@ -7,8 +7,8 @@ import copy
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_prop
-from src.integration.coupled_groups_optimisation import PropOptimisation
-from examples.example_classes.PROWIM_classes import PROWIM_wingpropinfo, PROWIM_prop_1, PROWIM_parameters
+from src.integration.coupled_groups_optimisation import PropOptimisationPitch
+from examples.example_classes.elysian_classes import elysian_wingpropinfo, elysian_prop
 
 # --- External ---
 import openmdao.api as om
@@ -18,63 +18,45 @@ import numpy as np
 logging.getLogger('matplotlib.font_manager').disabled = True
 BASE_DIR = Path(__file__).parents[0]
 
-if __name__=='__main__':
-    PROWIM_wingpropinfo.propeller = [PROWIM_prop_1]
-    PROWIM_wingpropinfo.nr_props = len(PROWIM_wingpropinfo.propeller)
-    PROWIM_wingpropinfo.propeller[0].rot_rate = 600
-    PROWIM_wingpropinfo.propeller[0].span *= 10
-    PROWIM_wingpropinfo.parameters.vinf = 160
-    PROWIM_wingpropinfo.parameters.air_density = 1.2087
-
-    # db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
-    # savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
-    # stackedplots_prop(db_name=db_name,
-    #                     wingpropinfo=PROWIM_wingpropinfo,
-    #                     savedir=savepath)
-    # quit()
-    
+def propopt(vinf: float, thrust_required: float, rot_rate: float, rho: float)->np.array:
+    elysian_wingpropinfo.propeller = [elysian_prop]
+    elysian_wingpropinfo.nr_props = 1
+    elysian_wingpropinfo.propeller[0].rot_rate = rot_rate
+    elysian_wingpropinfo.parameters.vinf = vinf
+    elysian_wingpropinfo.parameters.air_density = rho
+        
     objective = {
                 'HELIX_COUPLED.power_total':
-                    {'scaler': 1/215.21623945}
+                    {'scaler': 1./10628923.21085738}
                 }
 
     design_vars = {
-                    'HELIX_0.om_helix.geodef_parametric_0_twist':
+                    'DESIGNVARIABLES.rotor_0_pitch':
                         {'lb': 0,
                         'ub': 90,
                         'scaler': 1./10},
                     'HELIX_0.om_helix.geodef_parametric_0_rot_rate':
                         {'lb': 0,
                         'ub': 3000,
-                        'scaler': 1./1060},
-                    # 'DESIGNVARIABLES.rotor_0_chord':
-                    #     {'lb': -np.inf,
-                    #     'ub': np.inf,
-                    #     'scaler': 1./0.012032137566147693}
+                        'scaler': 1./160.},
                     }
 
     constraints = {
                     'HELIX_COUPLED.thrust_total':
-                        {'equals': 4_000}
+                        {'scaler': thrust_required}
                     }
     
     prob = om.Problem()
-    prob.model = PropOptimisation(  WingPropInfo=PROWIM_wingpropinfo,
-                                    objective=objective,
-                                    constraints=constraints,
-                                    design_vars=design_vars)
+    prob.model = PropOptimisationPitch(  WingPropInfo=elysian_wingpropinfo,
+                                        objective=objective,
+                                        constraints=constraints,
+                                        design_vars=design_vars)
     
     prob.setup()
     prob.run_model()
     
-    if False:
-        # prob.check_totals(compact_print=True, show_only_incorrect=True)
-        partials = prob.check_partials(compact_print=True, show_only_incorrect=True,
-               includes=['*HELIX_0*'],
-               form='central', step=1e-6)
-        
-        quit()
-    
+    prob.check_partials(includes=['*HELIX_PITCH*'], compact_print=True, show_only_incorrect=True)
+    quit()
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
 
@@ -114,10 +96,46 @@ if __name__=='__main__':
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
     
-    savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
-    stackedplots_prop(db_name=db_name,
-                    wingpropinfo=PROWIM_wingpropinfo,
-                    savedir=savepath)
-    all_plots(db_name=db_name,
-              wingpropinfo=PROWIM_wingpropinfo,
-              savedir=savepath)
+    return prob["HELIX_COUPLED.power_total"]
+    
+if __name__=='__main__':
+    # === Initiation ===
+    vinf = 0.
+    dt = 0.001
+
+    # === Constants ===
+    g = 9.80665
+    rho = 1.225
+    nr_props = 8
+    
+    # === Input variables ===
+    mass = 70_000 # kg
+    v_decision = 80 # m/s
+    distance_runway = 2000 # m
+    max_decelaration = 0.5*g # m/s^2
+    
+    rot_rate = 160
+    
+    cd = 0.04
+    S = 148.1
+    
+    # === Calculations ===
+    t = v_decision/max_decelaration
+    distance_stopping = 0.5 * max_decelaration * t**2 # assuming constant decelaration
+    distance_acceleration = distance_runway - distance_stopping
+    acceleration_average = v_decision**2/(2*distance_acceleration)
+    
+    thrust_netto = acceleration_average*mass
+    
+    power = []
+    
+    while vinf<v_decision:
+        drag = 0.5*rho*vinf**2*S*cd
+        thrust_required = thrust_netto+drag
+        
+        power.append(propopt(vinf=vinf, 
+                            thrust_required=thrust_required/nr_props, 
+                            rot_rate=rot_rate, 
+                            rho=rho))
+        
+        vinf+=acceleration_average*dt
