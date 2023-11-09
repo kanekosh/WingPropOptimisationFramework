@@ -4,6 +4,10 @@ import os
 import logging
 import copy
 
+import sys
+sys.path
+sys.path.append('/home/shugo/rsrc/WingPropOptimisationFramework')
+
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_prop
@@ -21,17 +25,16 @@ BASE_DIR = Path(__file__).parents[0]
 if __name__=='__main__':
     PROWIM_wingpropinfo.propeller = [PROWIM_prop_1]
     PROWIM_wingpropinfo.nr_props = len(PROWIM_wingpropinfo.propeller)
-    PROWIM_wingpropinfo.propeller[0].rot_rate = 600
-    PROWIM_wingpropinfo.propeller[0].span *= 10
-    PROWIM_wingpropinfo.parameters.vinf = 160
+    PROWIM_wingpropinfo.propeller[0].rot_rate = 249 * 2.0 * np.pi
+    PROWIM_wingpropinfo.parameters.vinf = 50
     PROWIM_wingpropinfo.parameters.air_density = 1.2087
 
-    # db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
-    # savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
-    # stackedplots_prop(db_name=db_name,
-    #                     wingpropinfo=PROWIM_wingpropinfo,
-    #                     savedir=savepath)
-    # quit()
+    db_name = os.path.join(BASE_DIR, 'results', 'data_propeller.db')
+    savepath = os.path.join(BASE_DIR, 'results', 'prop_results')
+    stackedplots_prop(db_name=db_name,
+                        wingpropinfo=PROWIM_wingpropinfo,
+                        savedir=savepath)
+    quit()
     
     objective = {
                 'HELIX_COUPLED.power_total':
@@ -64,7 +67,7 @@ if __name__=='__main__':
                                     constraints=constraints,
                                     design_vars=design_vars)
     
-    prob.setup()
+    prob.setup(check=True)
     prob.run_model()
     
     if False:
@@ -77,6 +80,9 @@ if __name__=='__main__':
     
     print_results(design_vars=design_vars, constraints=constraints, objective=objective,
                   prob=prob, kind="Initial Analysis")
+
+    # om.n2(prob)
+    aaa
 
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()

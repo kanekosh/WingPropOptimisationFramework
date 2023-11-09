@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).parents[1]
 with open(os.path.join(BASE_DIR, 'analysis', 'data', 'PROWIM.json'), 'r') as file:
     data = json.load(file)
 
-prop_radius = 0.1185
+prop_radius = 0.123   # NOTE: 0.1185 for small PROWIM, 0.123 for large PROWIM
 ref_point = data['ref_point']
 span = data['span']
 twist = data['twist']
@@ -27,6 +27,7 @@ alpha_L0 = data['alpha_L0']
 Cl_alpha = data['Cl_alpha']
 CD0 = np.array(data['cd0'])
 M = data['M']
+cd0 = data['cd0']
 
 J = 1.0  # advance ratio
 
@@ -51,7 +52,7 @@ PROWIM_prop_1 = PropInfo(label='Prop1',
                          nr_blades=4,
                          rot_rate=(PROWIM_parameters.vinf /
                                    (J*2.*prop_radius)) * 2.*np.pi,  # in rad/s,
-                         chord=np.array(chord, order='F')*prop_radius,
+                         chord=np.array(chord, order='F'),
                          twist=np.array(twist, order='F'),
                          span=np.array(span, order='F'),
                          airfoils=[AirfoilInfo(label=f'Foil_{index}',
@@ -70,14 +71,14 @@ PROWIM_prop_2 = PropInfo(label='Prop1',
                          nr_blades=4,
                          rot_rate=(PROWIM_parameters.vinf /
                                    (J*2.*prop_radius)) * 2.*np.pi,  # in rad/s,
-                         chord=np.array(chord, order='F')*prop_radius,
+                         chord=np.array(chord, order='F'),
                          twist=np.array(twist, order='F'),
                          span=np.array(span, order='F'),
                          airfoils=[AirfoilInfo(label=f'Foil_{index}',
                                                Cl_alpha=Cl_alpha[index],
                                                alpha_L0=alpha_L0[index],
                                                alpha_0=alpha_0[index],
-                                               CD0=np.array([CD0[0], CD0[1], CD0[2]]),
+                                               CD0=np.array([CD0[0, index], CD0[1, index], CD0[2, index]]),
                                                M=M[index])
                                    for index in range(spanwise_discretisation_propeller_BEM+1)],
                          ref_point=ref_point,
