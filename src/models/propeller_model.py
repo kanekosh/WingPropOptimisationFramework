@@ -172,6 +172,7 @@ class PropellerModel(om.Group):
             rotor.sec[iSection].alpha_L0 = self.propellerinfo.airfoils[iSection].alpha_L0
             rotor.sec[iSection].Cl_alpha = self.propellerinfo.airfoils[iSection].Cl_alpha
             rotor.sec[iSection].M = self.propellerinfo.airfoils[iSection].M # this determine how steep the stall curve is
+            rotor.sec[iSection].cd0 = self.propellerinfo.airfoils[iSection].CD0
 
         # Span Sections
         for iSpan in range(N_span):
