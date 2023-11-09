@@ -4,6 +4,10 @@ import os
 import logging
 import copy
 
+import sys
+sys.path
+sys.path.append('/home/shugo/rsrc/WingPropOptimisationFramework')
+
 # --- Internal ---
 from src.utils.tools import print_results
 from src.postprocessing.plots import all_plots, stackedplots_wing
@@ -99,7 +103,7 @@ if __name__ == '__main__':
     prob.setup()
     prob.run_model()
                     
-        # Check derivatives  
+    # Check derivatives  
     if False:
         prob.check_totals(  compact_print=True, show_only_incorrect=True,
                         form='central', step=1e-8, 
@@ -116,13 +120,14 @@ if __name__ == '__main__':
     # === Optimisation ===
     prob.driver = om.pyOptSparseDriver()
     prob.driver.options['optimizer'] = 'SNOPT'
-    prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
+    # prob.driver.options['debug_print'] = ['desvars', 'nl_cons']
     prob.driver.opt_settings = {
-        "Major feasibility tolerance": 1.0e-9,
-        "Major optimality tolerance": 1.0e-9,
-        "Minor feasibility tolerance": 1.0e-8,
+        "Major iterations limit": 300,
+        "Major feasibility tolerance": 1.0e-6,
+        "Major optimality tolerance": 1.0e-6,
+        # "Minor feasibility tolerance": 1.0e-8,
         "Verify level": -1,
-        "Function precision": 1.0e-6,
+        "Function precision": 1.0e-10,
         # "Major iterations limit": 1,
         "Nonderivative linesearch": None,
         "Print file": os.path.join(BASE_DIR, 'results', 'optimisation_print_wingprop.out'),
@@ -161,8 +166,14 @@ if __name__ == '__main__':
     print('==========================================================')
     print('====================== Optimisation ======================')
     print('==========================================================')
-    prob.setup()
+    prob.setup(mode='rev', check=True)   # manually set rev mode because we have a bunch of thickness interect constraint, which doesn't require OAS linear solver in reverse mode
+
+    # --- change OAS linear solver ---
+    prob.model.OPENAEROSTRUCT.AS_point_0.coupled.linear_solver = om.PETScKrylov(assemble_jac=True, iprint=0, err_on_non_converge=True)
+    prob.model.OPENAEROSTRUCT.AS_point_0.coupled.linear_solver.precon = om.LinearRunOnce(iprint=-1)
+
     prob.run_driver()
+    om.n2(prob, outfile='n2-aft-opt.html')
     
     prob.cleanup() # close all recorders
 
